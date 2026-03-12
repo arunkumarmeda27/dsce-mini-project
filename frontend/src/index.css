@@ -1,0 +1,170 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================= */
+/* BODY */
+/* ============================= */
+
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #F4F6F9;
+}
+
+/* ============================= */
+/* HEADER */
+/* ============================= */
+
+.header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+
+    height: 70px;
+    background: #0B3D91;
+    color: white;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 0 30px;
+    z-index: 1000;
+}
+
+/* ============================= */
+/* SIDEBAR */
+/* ============================= */
+
+.sidebar {
+    width: 240px;
+    background: #0B3D91;
+    color: white;
+
+    position: fixed;
+    top: 70px;
+    left: 0;
+
+    height: calc(100vh - 70px);
+    padding-top: 20px;
+
+    overflow-y: auto;
+}
+
+/* Sidebar Section Title */
+
+.sidebar-section {
+    font-size: 12px;
+    padding: 8px 20px;
+    opacity: 0.7;
+    text-transform: uppercase;
+}
+
+/* Sidebar Items */
+
+.sidebar-item {
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sidebar-item:hover {
+    background: #FFC107;
+    color: black;
+}
+
+/* Active Menu */
+
+.sidebar-item.active {
+    background: #FFC107;
+    color: black;
+    font-weight: bold;
+}
+
+/* ============================= */
+/* MAIN CONTENT */
+/* ============================= */
+
+.main {
+    margin-left: 240px;
+    margin-top: 90px;
+    padding: 20px;
+}
+
+/* ============================= */
+/* CARD */
+/* ============================= */
+
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+    margin-bottom: 20px;
+}
+
+/* ============================= */
+/* INPUTS */
+/* ============================= */
+
+.input {
+    width: 100%;
+    padding: 12px;
+    margin-top: 8px;
+    margin-bottom: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+
+/* ============================= */
+/* TABLE */
+/* ============================= */
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th {
+    text-align: left;
+    padding: 10px;
+}
+
+td {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+/* ============================= */
+/* BUTTONS */
+/* ============================= */
+
+.btn-primary {
+    background: #0B3D91;
+    color: white;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.btn-primary:hover {
+    background: #082c6c;
+}
+
+.btn-accent {
+    background: #FFC107;
+    color: black;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.btn-accent:hover {
+    background: #e6ad06;
+}
