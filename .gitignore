@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+.env
+
+# Node
+node_modules/
+dist/
+build/
+
+# uploads
+uploads/
+
+# system files
+.DS_Store
+Thumbs.db
+
+# firebase keys
+serviceAccountKey.json
+firebase_config.json
