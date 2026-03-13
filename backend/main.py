@@ -27,7 +27,6 @@ app = FastAPI(
 # CORS CONFIGURATION
 # ==================================
 
-
 origins = ["*"]
 
 app.add_middleware(
@@ -80,7 +79,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 app.include_router(user_router)
 app.include_router(group_router)
-app.include_router(export_router)
+app.include_router(auth_router)
 
 
 # ==================================
