@@ -1,8 +1,9 @@
 import { auth } from "../firebase/config";
-const BASE_URL = import.meta.env.VITE_API_URL;
 
-const BASE_URL = "https://dsce-mini-project.onrender.com";
+// Keep only this one! It will use the Vercel variable you added.
+const BASE_URL = import.meta.env.VITE_API_URL || "https://dsce-mini-project.onrender.com";
 
+// DELETE the other line that says const BASE_URL = "https://..."
 
 // =================================
 // GET FRESH FIREBASE TOKEN
