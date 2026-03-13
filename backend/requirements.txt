@@ -2,5 +2,5 @@ fastapi
 uvicorn
 firebase-admin
 python-multipart
-python-dotenv
 pydantic
+google-cloud-firestore
