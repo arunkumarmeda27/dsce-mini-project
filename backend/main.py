@@ -4,12 +4,12 @@ from fastapi.responses import JSONResponse
 import traceback
 
 # Routers
-from user_routes import router as user_router
-from group_routes import router as group_router
-from export_routes import router as export_router
+from backend.user_routes import router as user_router
+from backend.group_routes import router as group_router
+from backend.auth_routes import router as auth_router
 
 # System initialization
-from system_initializer import create_branch_admins
+from backend.system_initializer import create_branch_admins
 
 
 # ==================================
