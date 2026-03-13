@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 import traceback
 
 # Routers
-f# Routers
+# Routers
 from user_routes import router as user_router
 from group_routes import router as group_router
 from auth_routes import router as auth_router
