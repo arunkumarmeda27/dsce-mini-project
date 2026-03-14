@@ -4,13 +4,13 @@ from fastapi.responses import JSONResponse
 import traceback
 
 # Routers
-# Routers
-from user_routes import router as user_router
-from group_routes import router as group_router
-from auth_routes import router as auth_router
+from backend.user_routes import router as user_router
+from backend.group_routes import router as group_router
+from backend.auth_routes import router as auth_router
 
 # System initialization
-from system_initializer import create_branch_admins
+from backednsystem_initializer import create_branch_admins
+
 
 # ==================================
 # FASTAPI APP
@@ -26,6 +26,7 @@ app = FastAPI(
 # ==================================
 # CORS CONFIGURATION
 # ==================================
+
 
 origins = ["*"]
 
@@ -79,7 +80,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 app.include_router(user_router)
 app.include_router(group_router)
-app.include_router(auth_router)
+app.include_router(export_router)
 
 
 # ==================================
