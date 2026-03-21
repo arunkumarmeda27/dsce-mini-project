@@ -1,0 +1,22 @@
+BRANCHES = {
+    "AI": "Artificial Intelligence and Machine Learning",
+    "AE": "Aeronautical Engineering",
+    "ABE": "Automobile Engineering",
+    "BT": "Biotechnology",
+    "CSE": "Computer Science and Engineering",
+    "CSBS": "Computer Science and Business Systems",
+    "CY": "Computer Science & Engineering (Cyber Security)",
+    "DS": "Computer Science & Engineering (Data Science)",
+    "IOT": "Computer Science & Engineering (IoT & Cyber Security)",
+    "CSD": "Computer Science and Design",
+    "CH": "Chemical Engineering",
+    "CE": "Civil Engineering",
+    "EEE": "Electrical & Electronics Engineering",
+    "ECE": "Electronics & Communication Engineering",
+    "ISE": "Information Science and Engineering",
+    "EIE": "Electronics and Instrumentation Engineering",
+    "ME": "Mechanical Engineering",
+    "MEE": "Medical Electronics Engineering",
+    "ETE": "Electronics and Telecommunication Engineering",
+    "RAI": "Robotics and Artificial Intelligence"
+}
