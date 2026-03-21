@@ -3,6 +3,8 @@ import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
 import { api } from "../../services/api";
 
+const BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+
 export default function Approvals() {
 
     const [users, setUsers] = useState([]);
@@ -42,7 +44,7 @@ export default function Approvals() {
 
         try {
 
-            const res = await fetch(`http://127.0.0.1:8000/users/approve/${uid}`, {
+            const res = await fetch(`${BASE_URL}/users/approve/${uid}`, {
                 method: "PUT",
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem("token")}`
@@ -81,7 +83,7 @@ export default function Approvals() {
 
         try {
 
-            const res = await fetch(`http://127.0.0.1:8000/users/reject/${uid}`, {
+            const res = await fetch(`${BASE_URL}/users/reject/${uid}`, {
                 method: "DELETE",
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem("token")}`
