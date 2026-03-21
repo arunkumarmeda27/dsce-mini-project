@@ -1,6 +1,9 @@
 import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
 import Preloader from "../../components/Preloader";
+import Modal from "../../components/Modal";
+import Toast from "../../components/Toast";
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -16,6 +19,10 @@ export default function CreateGroup() {
     const [loading, setLoading] = useState(true);
     const [alreadyCreated, setAlreadyCreated] = useState(false);
 
+    const [modal, setModal] = useState(null);
+    const [toast, setToast] = useState(null);
+    const [creating, setCreating] = useState(false);
+
     const navigate = useNavigate();
 
     const getToken = () => localStorage.getItem("token");
@@ -28,93 +35,146 @@ export default function CreateGroup() {
 
         try {
 
-            // 🔹 Check if group already exists
-            const groupRes = await fetch(`${BASE_URL}/my-group`, {
-                headers: { Authorization: `Bearer ${getToken()}` }
+            const token = getToken();
+
+            const groupRes = await fetch(`${BASE_URL}/groups/my-group`, {
+                headers: { Authorization: `Bearer ${token}` }
             });
 
             const groupData = await groupRes.json();
 
-            if (groupRes.ok && groupData?.projectName) {
+            if (groupRes.ok && groupData?.groupId) {
                 setAlreadyCreated(true);
                 setLoading(false);
                 return;
             }
 
-            // 🔹 Get user
-            const profileRes = await fetch(`${BASE_URL}/user-profile`, {
-                headers: { Authorization: `Bearer ${getToken()}` }
+            const profileRes = await fetch(`${BASE_URL}/users/user-profile`, {
+                headers: { Authorization: `Bearer ${token}` }
             });
 
             const profileData = await profileRes.json();
 
-            if (profileRes.ok) {
-                setCurrentUser(profileData);
-            }
+            if (profileRes.ok) setCurrentUser(profileData);
 
-            // 🔹 Get eligible students
-            const studentRes = await fetch(`${BASE_URL}/eligible-students`, {
-                headers: { Authorization: `Bearer ${getToken()}` }
+            const studentRes = await fetch(`${BASE_URL}/groups/eligible-students`, {
+                headers: { Authorization: `Bearer ${token}` }
             });
 
             const studentData = await studentRes.json();
 
-            if (studentRes.ok) {
-                setStudents(studentData);
-            }
+            if (studentRes.ok) setStudents(studentData);
 
         } catch {
-            alert("Server error");
+            setModal({
+                title: "Error",
+                message: "Server error while loading data"
+            });
         }
 
         setLoading(false);
     };
 
-    const handleCheckbox = (uid, checked) => {
+    // ===============================
+    // SELECT MEMBERS
+    // ===============================
+    const handleCheckbox = (uid) => {
 
-        if (checked) {
-            if (selected.length >= 3) {
-                alert("Select only 3 members");
-                return;
-            }
-            setSelected([...selected, uid]);
-        } else {
+        if (selected.includes(uid)) {
             setSelected(selected.filter(id => id !== uid));
+        } else {
+
+            if (selected.length >= 3) {
+                return setModal({
+                    title: "Limit Reached",
+                    message: "You can select only 3 members"
+                });
+            }
+
+            setSelected([...selected, uid]);
         }
     };
 
+    // ===============================
+    // CREATE GROUP
+    // ===============================
     const handleCreate = async () => {
 
-        if (!projectName.trim()) return alert("Enter project name");
-        if (!domain.trim()) return alert("Enter domain");
-        if (selected.length !== 3) return alert("Select exactly 3 members");
+        if (!projectName.trim()) {
+            return setModal({
+                title: "Missing Field",
+                message: "Enter project name"
+            });
+        }
+
+        if (!domain.trim()) {
+            return setModal({
+                title: "Missing Field",
+                message: "Enter domain"
+            });
+        }
+
+        if (selected.length !== 3) {
+            return setModal({
+                title: "Invalid Selection",
+                message: "Select exactly 3 members"
+            });
+        }
 
         try {
 
-            const res = await fetch(`${BASE_URL}/create-group`, {
+            setCreating(true);
+
+            const res = await fetch(`${BASE_URL}/groups/create-group`, {
+
                 method: "POST",
+
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${getToken()}`
                 },
+
                 body: JSON.stringify({
                     projectName,
                     domain,
                     members: selected
                 })
+
             });
 
             const data = await res.json();
 
             if (res.ok) {
-                setAlreadyCreated(true);
+
+                setToast({
+                    message: "Group created successfully 🎉",
+                    type: "success"
+                });
+
+                setTimeout(() => {
+                    navigate("/student");
+                }, 1500);
+
             } else {
-                alert(data.detail || "Error creating group");
+
+                setModal({
+                    title: "Error",
+                    message: data.detail || "Failed to create group"
+                });
+
             }
 
         } catch {
-            alert("Server error");
+
+            setModal({
+                title: "Server Error",
+                message: "Please try again later"
+            });
+
+        } finally {
+            setCreating(false);
         }
+
     };
 
     if (loading) return <Preloader />;
@@ -122,37 +182,47 @@ export default function CreateGroup() {
     return (
 
         <div>
+
             <Header />
             <Sidebar role="student" />
 
             <div className="main">
+
                 <div className="card">
 
-                    <h2>Create 4-Member Project Group</h2>
+                    <h2 style={{ color: "#1565C0" }}>
+                        Create Project Group
+                    </h2>
 
                     {alreadyCreated ? (
 
                         <div style={{ marginTop: "15px" }}>
-                            <p style={{ color: "green", fontWeight: "bold" }}>
-                                ✅ Your group has been created successfully.
+
+                            <p style={{
+                                color: "#2E7D32",
+                                fontWeight: "bold"
+                            }}>
+                                ✅ Group already created
                             </p>
 
                             <button
                                 className="btn-primary"
-                                onClick={() => navigate("/group-status")}
-                                style={{ marginTop: "10px" }}
+                                onClick={() => navigate("/student")}
                             >
-                                View Group Status
+                                Go to Dashboard
                             </button>
+
                         </div>
 
                     ) : (
 
                         <>
+
                             <p>
                                 Leader: <strong>{currentUser?.name}</strong>
                             </p>
 
+                            {/* INPUTS */}
                             <input
                                 className="input"
                                 placeholder="Project Name"
@@ -162,45 +232,89 @@ export default function CreateGroup() {
 
                             <input
                                 className="input"
-                                placeholder="Domain"
+                                placeholder="Domain (AI, Web, IoT...)"
                                 value={domain}
                                 onChange={(e) => setDomain(e.target.value)}
                             />
 
-                            <h4>Select 3 Members</h4>
+                            {/* MEMBERS */}
+                            <h4 style={{ marginTop: "15px" }}>
+                                Select 3 Members
+                            </h4>
 
-                            {students.length === 0 && (
-                                <p style={{ fontSize: "13px", color: "gray" }}>
-                                    No eligible students available.
-                                </p>
-                            )}
+                            <div style={{
+                                display: "grid",
+                                gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))",
+                                gap: "10px"
+                            }}>
 
-                            {students.map(u => (
-                                <div key={u.uid}>
-                                    <input
-                                        type="checkbox"
-                                        checked={selected.includes(u.uid)}
-                                        onChange={(e) =>
-                                            handleCheckbox(u.uid, e.target.checked)
-                                        }
-                                    />
-                                    {u.name}
-                                </div>
-                            ))}
+                                {students.map(u => (
 
-                            <p>Selected: {selected.length}/3</p>
+                                    <div
+                                        key={u.uid}
+                                        onClick={() => handleCheckbox(u.uid)}
+                                        style={{
+                                            padding: "10px",
+                                            borderRadius: "8px",
+                                            border: selected.includes(u.uid)
+                                                ? "2px solid #1565C0"
+                                                : "1px solid #ddd",
+                                            cursor: "pointer",
+                                            background: selected.includes(u.uid)
+                                                ? "#E3F2FD"
+                                                : "white"
+                                        }}
+                                    >
+                                        <strong>{u.name}</strong>
+                                        <div style={{ fontSize: "12px" }}>
+                                            {u.usn}
+                                        </div>
+                                    </div>
+
+                                ))}
+
+                            </div>
+
+                            <p style={{ marginTop: "10px" }}>
+                                Selected: {selected.length}/3
+                            </p>
 
                             <button
                                 className="btn-primary"
                                 onClick={handleCreate}
+                                disabled={creating}
+                                style={{ width: "100%" }}
                             >
-                                Create Group
+                                {creating ? "Creating..." : "Create Group"}
                             </button>
+
                         </>
+
                     )}
 
                 </div>
+
             </div>
+
+            {/* MODAL */}
+            {modal && (
+                <Modal
+                    title={modal.title}
+                    message={modal.message}
+                    onClose={() => setModal(null)}
+                />
+            )}
+
+            {/* TOAST */}
+            {toast && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
+                />
+            )}
+
         </div>
+
     );
 }

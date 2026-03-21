@@ -1,16 +1,23 @@
 import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
 import Preloader from "../../components/Preloader";
+import Toast from "../../components/Toast";
 import { useEffect, useState } from "react";
 import { api } from "../../services/api";
+import { useNavigate } from "react-router-dom";
+
+const BASE_URL = "http://127.0.0.1:8000";
 
 export default function GuideDashboard() {
+
+    const navigate = useNavigate();
 
     const [guideInfo, setGuideInfo] = useState(null);
     const [groups, setGroups] = useState([]);
     const [submissions, setSubmissions] = useState([]);
-    const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [newPassword, setNewPassword] = useState("");
+    const [toast, setToast] = useState(null);
 
     useEffect(() => {
         loadDashboard();
@@ -24,68 +31,88 @@ export default function GuideDashboard() {
             setGuideInfo(profile);
 
             const guideGroups = await api.getGuideGroups();
-            setGroups(guideGroups);
+            setGroups(guideGroups || []);
 
             const submissionData = await api.getGuideSubmissions();
-            setSubmissions(submissionData);
+            setSubmissions(submissionData || []);
 
-            const notify = await api.getMyNotifications();
-            setNotifications(notify);
-
-        } catch (err) {
-
-            console.error(err);
-
-        } finally {
-
-            setLoading(false);
-
+        } catch {
+            setToast({ message: "Failed to load data", type: "error" });
         }
 
+        setLoading(false);
     };
 
-    // =================================
-    // GUIDE ACCEPT / REJECT GROUP
-    // =================================
+    // ======================
+    // EXPORT
+    // ======================
+    const downloadFile = async (type) => {
+
+        try {
+
+            const token = localStorage.getItem("token");
+
+            const res = await fetch(`${BASE_URL}/groups/export/${type}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `Guide_Report.${type === "excel" ? "xlsx" : "pdf"}`;
+            a.click();
+
+        } catch {
+            setToast({ message: "Export failed", type: "error" });
+        }
+    };
+
+    // ======================
+    // PASSWORD
+    // ======================
+    const resetPassword = async () => {
+
+        if (newPassword.length < 6)
+            return setToast({ message: "Min 6 characters", type: "error" });
+
+        try {
+            await api.resetPassword(newPassword);
+            setToast({ message: "Password updated", type: "success" });
+            setNewPassword("");
+        } catch {
+            setToast({ message: "Failed", type: "error" });
+        }
+    };
+
+    // ======================
+    // ACCEPT / REJECT
+    // ======================
     const handleDecision = async (groupId, decision) => {
 
         try {
-
             await api.guideDecision(groupId, decision);
-
-            alert(`Group ${decision}`);
-
+            setToast({ message: `Group ${decision}`, type: "success" });
             loadDashboard();
-
         } catch {
-
-            alert("Action failed");
-
+            setToast({ message: "Action failed", type: "error" });
         }
-
     };
 
-    // =================================
-    // REVIEW PROJECT SUBMISSION
-    // =================================
-    const reviewSubmission = async (submissionId, decision) => {
-
-        const comment = prompt("Enter comment for students");
+    // ======================
+    // NOTIFY STUDENTS
+    // ======================
+    const handleNotifyGuide = async (groupId) => {
+        const message = window.prompt("Enter notification message for this group's students:");
+        if (!message || message.trim() === "") return;
 
         try {
-
-            await api.reviewSubmission(submissionId, decision, comment);
-
-            alert("Review submitted");
-
-            loadDashboard();
-
+            await api.sendGuideNotification(groupId, message.trim());
+            setToast({ message: "Notification sent tracking", type: "success" });
         } catch {
-
-            alert("Review failed");
-
+            setToast({ message: "Failed to send notification", type: "error" });
         }
-
     };
 
     if (loading) return <Preloader />;
@@ -99,266 +126,164 @@ export default function GuideDashboard() {
 
             <div className="main">
 
-                {/* ================= GUIDE PROFILE ================= */}
+                {/* HEADER */}
+                <div style={card}>
+                    <h2 style={{ color: "#1565C0" }}>Guide Dashboard</h2>
 
-                <div className="card">
+                    <p><b>{guideInfo?.name}</b></p>
+                    <p>{guideInfo?.email}</p>
+                    <p>{guideInfo?.branch}</p>
 
-                    <h2 style={{ color: "#0B3D91" }}>
-                        Guide Dashboard
-                    </h2>
+                    {/* EXPORT BUTTONS */}
+                    <div style={{ marginTop: "10px" }}>
+                        <button className="btn-primary"
+                            onClick={() => downloadFile("excel")}>
+                            Export Excel
+                        </button>
 
-                    {guideInfo && (
-                        <>
-                            <p><strong>Name:</strong> {guideInfo.name}</p>
-                            <p><strong>Email:</strong> {guideInfo.email}</p>
-                            <p><strong>Branch:</strong> {guideInfo.branch}</p>
-                        </>
-                    )}
-
-                </div>
-
-
-                {/* ================= GUIDE LIMIT INDICATOR ================= */}
-
-                <div className="card">
-
-                    <h3 style={{ color: "#0B3D91" }}>
-                        Guide Group Capacity
-                    </h3>
-
-                    <p>
-                        Assigned Groups: <strong>{groups.length} / 3</strong>
-                    </p>
-
-                    {groups.length >= 3 && (
-                        <p style={{ color: "red" }}>
-                            Maximum limit reached
-                        </p>
-                    )}
-
-                </div>
-
-
-                {/* ================= ANALYTICS ================= */}
-
-                <div style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(3,1fr)",
-                    gap: "15px",
-                    marginBottom: "20px"
-                }}>
-
-                    <div className="card">
-                        <h3>Total Assigned</h3>
-                        <h2>{groups.length}</h2>
+                        <button className="btn-accent"
+                            style={{ marginLeft: "10px" }}
+                            onClick={() => downloadFile("pdf")}>
+                            Export PDF
+                        </button>
                     </div>
-
-                    <div className="card">
-                        <h3>Accepted</h3>
-                        <h2>
-                            {groups.filter(g => g.status === "GUIDE_ACCEPTED").length}
-                        </h2>
-                    </div>
-
-                    <div className="card">
-                        <h3>Pending</h3>
-                        <h2>
-                            {groups.filter(g => g.status === "GUIDE_ASSIGNED").length}
-                        </h2>
-                    </div>
-
                 </div>
 
-
-                {/* ================= ASSIGNED GROUPS ================= */}
-
-                <div className="card">
-
-                    <h3 style={{ color: "#0B3D91" }}>
-                        Assigned Groups
-                    </h3>
-
-                    {groups.length === 0 && (
-                        <p>No groups assigned</p>
-                    )}
-
-                    {groups.map(group => (
-
-                        <div
-                            key={group.groupId}
-                            style={{
-                                marginTop: "20px",
-                                padding: "15px",
-                                border: "1px solid #ddd",
-                                borderRadius: "8px"
-                            }}
-                        >
-
-                            <h3 style={{ color: "#0B3D91" }}>
-                                {group.projectName}
-                            </h3>
-
-                            <p><strong>Group ID:</strong> {group.groupId}</p>
-
-                            <p><strong>Domain:</strong> {group.domain}</p>
-
-                            <p><strong>Status:</strong> {group.status}</p>
-
-                            <h4>Members</h4>
-
-                            <ul>
-
-                                {group.members.map((m, i) => (
-                                    <li key={i}>
-                                        {m.name} ({m.usn})
-                                    </li>
-                                ))}
-
-                            </ul>
-
-                            {group.status === "GUIDE_ASSIGNED" && (
-
-                                <div style={{ marginTop: "10px" }}>
-
-                                    <button
-                                        className="btn-primary"
-                                        onClick={() => handleDecision(group.groupId, "ACCEPT")}
-                                    >
-                                        Accept
-                                    </button>
-
-                                    <button
-                                        className="btn-accent"
-                                        style={{ marginLeft: "10px" }}
-                                        onClick={() => handleDecision(group.groupId, "REJECT")}
-                                    >
-                                        Reject
-                                    </button>
-
-                                </div>
-
-                            )}
-
-                        </div>
-
-                    ))}
-
+                {/* STATS */}
+                <div style={grid}>
+                    <Stat title="Total Groups" value={groups.length} />
+                    <Stat title="Accepted" value={groups.filter(g => g.status === "GUIDE_ACCEPTED").length} />
+                    <Stat title="Pending" value={groups.filter(g => g.status === "GUIDE_ASSIGNED").length} />
                 </div>
 
+                {/* PASSWORD */}
+                <div style={card}>
+                    <h3>🔐 Change Password</h3>
 
-                {/* ================= PROJECT SUBMISSIONS ================= */}
+                    <input
+                        type="password"
+                        className="input"
+                        placeholder="New password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                    />
 
-                <div className="card">
+                    <button className="btn-primary"
+                        style={{ marginTop: "10px" }}
+                        onClick={resetPassword}>
+                        Update
+                    </button>
+                </div>
 
-                    <h3 style={{ color: "#0B3D91" }}>
-                        Project Submissions
-                    </h3>
+                {/* GROUPS */}
+                <div style={card}>
+                    <h3 style={{ color: "#1565C0" }}>Assigned Groups</h3>
 
-                    {submissions.length === 0 && (
-                        <p>No submissions yet</p>
-                    )}
+                    <table style={{ width: "100%" }}>
+
+                        <thead style={{ background: "#1565C0", color: "white" }}>
+                            <tr>
+                                <th>ID</th>
+                                <th>Project</th>
+                                <th>Status</th>
+                                <th>Members</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {groups.map(g => (
+
+                                <tr key={g.groupId}>
+
+                                    <td>{g.groupId}</td>
+                                    <td>{g.projectName}</td>
+                                    <td>{g.status}</td>
+
+                                    <td>
+                                        {g.members.map(m => (
+                                            <div key={m.uid}>{m.name}</div>
+                                        ))}
+                                    </td>
+
+                                    <td>
+
+                                        {g.status === "GUIDE_ASSIGNED" && (
+                                            <>
+                                                <button
+                                                    className="btn-primary"
+                                                    onClick={() => handleDecision(g.groupId, "ACCEPT")}
+                                                >
+                                                    Accept
+                                                </button>
+
+                                                <button
+                                                    className="btn-accent"
+                                                    style={{ marginLeft: "5px" }}
+                                                    onClick={() => handleDecision(g.groupId, "REJECT")}
+                                                >
+                                                    Reject
+                                                </button>
+                                            </>
+                                        )}
+
+                                        {/* VIEW FILES BUTTON */}
+                                        <button
+                                            style={{
+                                                marginLeft: "5px",
+                                                padding: "6px 10px",
+                                                borderRadius: "6px",
+                                                cursor: "pointer"
+                                            }}
+                                            onClick={() => navigate(`/view-files/${g.groupId}`)}
+                                        >
+                                            View Files
+                                        </button>
+
+                                        {/* NOTIFY BUTTON */}
+                                        <button
+                                            style={{
+                                                marginLeft: "5px",
+                                                padding: "6px 10px",
+                                                borderRadius: "6px",
+                                                cursor: "pointer",
+                                                background: "#4CAF50",
+                                                color: "white",
+                                                border: "none"
+                                            }}
+                                            onClick={() => handleNotifyGuide(g.groupId)}
+                                        >
+                                            Notify
+                                        </button>
+
+                                    </td>
+
+                                </tr>
+
+                            ))}
+                        </tbody>
+
+                    </table>
+                </div>
+
+                {/* SUBMISSIONS */}
+                <div style={card}>
+                    <h3 style={{ color: "#1565C0" }}>Project Submissions</h3>
 
                     {submissions.map(sub => (
 
-                        <div
-                            key={sub.id}
-                            style={{
-                                border: "1px solid #ddd",
-                                padding: "15px",
-                                borderRadius: "8px",
-                                marginTop: "15px"
-                            }}
-                        >
+                        <div key={sub.id} style={submissionCard}>
 
-                            <p><strong>Group:</strong> {sub.groupId}</p>
-
-                            <p><strong>Status:</strong> {sub.status}</p>
+                            <p><b>Group:</b> {sub.groupId}</p>
+                            <p><b>Status:</b> {sub.status}</p>
 
                             <div style={{ marginTop: "10px" }}>
-
-                                {sub.reportUrl && (
-                                    <div>
-                                        <a
-                                            href={sub.reportUrl}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                        >
-                                            Download Report
-                                        </a>
-                                    </div>
-                                )}
-
-                                {sub.pptUrl && (
-                                    <div>
-                                        <a
-                                            href={sub.pptUrl}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                        >
-                                            Download Presentation
-                                        </a>
-                                    </div>
-                                )}
-
+                                <button onClick={() =>
+                                    navigate(`/view-files/${sub.groupId}`)
+                                }>
+                                    📂 Open Files
+                                </button>
                             </div>
-
-                            {sub.status === "SUBMITTED" && (
-
-                                <div style={{ marginTop: "10px" }}>
-
-                                    <button
-                                        className="btn-primary"
-                                        onClick={() =>
-                                            reviewSubmission(sub.id, "APPROVED")
-                                        }
-                                    >
-                                        Approve
-                                    </button>
-
-                                    <button
-                                        className="btn-accent"
-                                        style={{ marginLeft: "10px" }}
-                                        onClick={() =>
-                                            reviewSubmission(sub.id, "REJECTED")
-                                        }
-                                    >
-                                        Reject
-                                    </button>
-
-                                </div>
-
-                            )}
-
-                        </div>
-
-                    ))}
-
-                </div>
-
-
-                {/* ================= NOTIFICATIONS ================= */}
-
-                <div className="card">
-
-                    <h3 style={{ color: "#0B3D91" }}>
-                        Notifications
-                    </h3>
-
-                    {notifications.length === 0 && (
-                        <p>No notifications</p>
-                    )}
-
-                    {notifications.map(n => (
-
-                        <div
-                            key={n.id}
-                            style={{
-                                padding: "10px",
-                                borderBottom: "1px solid #eee"
-                            }}
-                        >
-
-                            {n.message}
 
                         </div>
 
@@ -368,8 +293,46 @@ export default function GuideDashboard() {
 
             </div>
 
+            {toast && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
+                />
+            )}
+
         </div>
-
     );
+}
 
+
+// ================= STYLES =================
+const card = {
+    background: "#fff",
+    padding: "20px",
+    borderRadius: "14px",
+    boxShadow: "0 6px 25px rgba(0,0,0,0.06)",
+    marginBottom: "20px"
+};
+
+const grid = {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))",
+    gap: "15px"
+};
+
+const submissionCard = {
+    padding: "15px",
+    background: "#F5F9FF",
+    borderRadius: "10px",
+    marginTop: "10px"
+};
+
+function Stat({ title, value }) {
+    return (
+        <div style={card}>
+            <h4>{title}</h4>
+            <h2 style={{ color: "#1565C0" }}>{value}</h2>
+        </div>
+    );
 }

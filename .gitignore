@@ -1,21 +1,42 @@
-# Python
+# ========================
+# PYTHON
+# ========================
 __pycache__/
-*.pyc
+*.py[cod]
+*.pyo
 venv/
 .env
+*.egg-info/
 
-# Node
+# ========================
+# NODE / FRONTEND
+# ========================
 node_modules/
 dist/
 build/
+.vite/
 
-# uploads
-uploads/
-
-# system files
-.DS_Store
-Thumbs.db
-
-# firebase keys
+# ========================
+# SENSITIVE / SECRETS
+# ========================
 serviceAccountKey.json
 firebase_config.json
+*.json.bak
+
+# ========================
+# UPLOADS (user files)
+# ========================
+backend/uploads/
+
+# ========================
+# SYSTEM FILES
+# ========================
+.DS_Store
+Thumbs.db
+*.log
+
+# ========================
+# IDE
+# ========================
+.vscode/
+.idea/

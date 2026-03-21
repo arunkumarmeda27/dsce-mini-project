@@ -3,6 +3,7 @@ import Sidebar from "../../components/Sidebar";
 import { useEffect, useState } from "react";
 import { api } from "../../services/api";
 import { auth } from "../../firebase/config";
+import Preloader from "../../components/Preloader";
 
 import {
     BarChart,
@@ -14,29 +15,26 @@ import {
     ResponsiveContainer
 } from "recharts";
 
+const BASE_URL = "http://127.0.0.1:8000";
+
 export default function AdminDashboard() {
 
-    const [adminInfo, setAdminInfo] = useState({
-        email: "",
-        branch: "",
-        role: ""
-    });
-
+    const [adminInfo, setAdminInfo] = useState({});
     const [pendingUsers, setPendingUsers] = useState([]);
     const [students, setStudents] = useState([]);
     const [guides, setGuides] = useState([]);
     const [groups, setGroups] = useState([]);
-    const [submissions, setSubmissions] = useState([]);
-
     const [chartData, setChartData] = useState([]);
     const [domainStats, setDomainStats] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+
+        loadData();
 
         const user = auth.currentUser;
 
         if (user) {
-
             const email = user.email || "";
             let branch = "";
 
@@ -52,40 +50,39 @@ export default function AdminDashboard() {
             });
         }
 
-        loadData();
-
     }, []);
 
     const loadData = async () => {
 
+        setLoading(true);
+
         try {
 
-            const pending = await api.getPendingUsers();
-            const students = await api.getStudents();
-            const guides = await api.getGuides();
-            const groups = await api.getBranchGroups();
-            const submissions = await api.getAllSubmissions();
+            const [pending, studentList, guideList, groupList] = await Promise.all([
+                api.getPendingUsers(),
+                api.getStudents(),
+                api.getGuides(),
+                api.getBranchGroups()
+            ]);
 
-            setPendingUsers(pending);
-            setStudents(students);
-            setGuides(guides);
-            setGroups(groups);
-            setSubmissions(submissions);
+            setPendingUsers(pending || []);
+            setStudents(studentList || []);
+            setGuides(guideList || []);
+            setGroups(groupList || []);
 
             setChartData([
-                { name: "Students", value: students.length },
-                { name: "Guides", value: guides.length },
-                { name: "Groups", value: groups.length },
+                { name: "Students", value: studentList.length },
+                { name: "Guides", value: guideList.length },
+                { name: "Groups", value: groupList.length },
                 { name: "Pending", value: pending.length }
             ]);
 
-            calculateDomainStats(groups);
+            calculateDomainStats(groupList);
 
         } catch (err) {
-
             console.error(err);
-            alert("Failed to load dashboard data");
-
+        } finally {
+            setLoading(false);
         }
 
     };
@@ -95,77 +92,46 @@ export default function AdminDashboard() {
         const stats = {};
 
         groups.forEach(g => {
-
             const domain = g.domain || "Other";
-
-            if (!stats[domain]) stats[domain] = 0;
-
-            stats[domain]++;
-
+            stats[domain] = (stats[domain] || 0) + 1;
         });
 
-        const formatted = Object.entries(stats).map(([domain, count]) => ({
-            domain,
-            count
-        }));
-
-        setDomainStats(formatted);
-
-    };
-
-
-    // =========================
-    // EXPORT EXCEL
-    // =========================
-    const exportExcel = async () => {
-
-        const token = localStorage.getItem("token");
-
-        const res = await fetch(
-            "http://127.0.0.1:8000/export/excel",
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            }
+        setDomainStats(
+            Object.entries(stats).map(([domain, count]) => ({
+                domain,
+                count
+            }))
         );
+    };
 
-        const blob = await res.blob();
-        const url = window.URL.createObjectURL(blob);
+    const downloadFile = async (type) => {
 
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "DSCE_Group_Report.xlsx";
-        a.click();
+        try {
+
+            const token = localStorage.getItem("token");
+
+            const res = await fetch(`${BASE_URL}/groups/export/${type}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (!res.ok) return;
+
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `DSCE_Report.${type === "excel" ? "xlsx" : "pdf"}`;
+            a.click();
+
+        } catch {
+            console.log("Export error");
+        }
 
     };
 
-
-    // =========================
-    // EXPORT PDF
-    // =========================
-    const exportPDF = async () => {
-
-        const token = localStorage.getItem("token");
-
-        const res = await fetch(
-            "http://127.0.0.1:8000/export/pdf",
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            }
-        );
-
-        const blob = await res.blob();
-        const url = window.URL.createObjectURL(blob);
-
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "DSCE_Group_Report.pdf";
-        a.click();
-
-    };
+    // 🔥 PRELOADER
+    if (loading) return <Preloader />;
 
     return (
 
@@ -176,184 +142,102 @@ export default function AdminDashboard() {
 
             <div className="main">
 
-                {/* ADMIN INFO */}
-
+                {/* PROFILE */}
                 <div className="card">
-
-                    <h2 style={{ color: "#0B3D91" }}>
-                        Admin Dashboard
-                    </h2>
-
-                    <p><strong>Email:</strong> {adminInfo.email}</p>
-                    <p><strong>Branch:</strong> {adminInfo.branch}</p>
-                    <p><strong>Role:</strong> {adminInfo.role}</p>
-
+                    <h2 style={{ color: "#1565C0" }}>Admin Dashboard</h2>
+                    <p><b>Email:</b> {adminInfo.email}</p>
+                    <p><b>Branch:</b> {adminInfo.branch}</p>
                 </div>
 
+                {/* 🔥 MANUAL REFRESH BUTTON */}
+                <div className="card">
+                    <button className="btn-primary" onClick={loadData}>
+                        🔄 Refresh Data
+                    </button>
+                </div>
 
                 {/* EXPORT */}
-
                 <div className="card">
+                    <h3>Export Reports</h3>
 
-                    <h3 style={{ color: "#0B3D91" }}>
-                        Export Group Reports
-                    </h3>
-
-                    <button className="btn-primary" onClick={exportExcel}>
+                    <button
+                        className="btn-primary"
+                        onClick={() => downloadFile("excel")}
+                    >
                         Export Excel
                     </button>
 
                     <button
                         className="btn-accent"
                         style={{ marginLeft: "10px" }}
-                        onClick={exportPDF}
+                        onClick={() => downloadFile("pdf")}
                     >
                         Export PDF
                     </button>
-
                 </div>
 
-
-                {/* ANALYTICS */}
-
+                {/* STATS */}
                 <div style={{
                     display: "grid",
-                    gridTemplateColumns: "repeat(4,1fr)",
-                    gap: "15px",
-                    marginBottom: "20px"
+                    gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))",
+                    gap: "15px"
                 }}>
-
-                    <div className="card">
-                        <h3>Total Students</h3>
-                        <h2>{students.length}</h2>
-                    </div>
-
-                    <div className="card">
-                        <h3>Total Guides</h3>
-                        <h2>{guides.length}</h2>
-                    </div>
-
-                    <div className="card">
-                        <h3>Total Groups</h3>
-                        <h2>{groups.length}</h2>
-                    </div>
-
-                    <div className="card">
-                        <h3>Pending Approvals</h3>
-                        <h2>{pendingUsers.length}</h2>
-                    </div>
-
+                    <StatCard title="Students" value={students.length} />
+                    <StatCard title="Guides" value={guides.length} />
+                    <StatCard title="Groups" value={groups.length} />
+                    <StatCard title="Pending" value={pendingUsers.length} />
                 </div>
 
-
-                {/* ANALYTICS CHART */}
-
+                {/* MAIN CHART */}
                 <div className="card">
-
-                    <h3 style={{ color: "#0B3D91" }}>
-                        System Analytics
-                    </h3>
+                    <h3>System Analytics</h3>
 
                     <ResponsiveContainer width="100%" height={300}>
-
                         <BarChart data={chartData}>
-
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="name" />
                             <YAxis />
                             <Tooltip />
-
-                            <Bar dataKey="value" fill="#0B3D91" />
-
+                            <Bar dataKey="value" fill="#1565C0" />
                         </BarChart>
-
                     </ResponsiveContainer>
-
                 </div>
 
-
                 {/* DOMAIN CHART */}
-
                 <div className="card">
-
-                    <h3 style={{ color: "#0B3D91" }}>
-                        Project Domain Statistics
-                    </h3>
+                    <h3>Domain Statistics</h3>
 
                     <ResponsiveContainer width="100%" height={300}>
-
                         <BarChart data={domainStats}>
-
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="domain" />
                             <YAxis />
                             <Tooltip />
-
-                            <Bar dataKey="count" fill="#FFC107" />
-
+                            <Bar dataKey="count" fill="#2E7D32" />
                         </BarChart>
-
                     </ResponsiveContainer>
-
-                </div>
-
-
-                {/* PROJECT SUBMISSIONS */}
-
-                <div className="card">
-
-                    <h3 style={{ color: "#0B3D91" }}>
-                        Project Submissions
-                    </h3>
-
-                    {submissions.length === 0 && (
-                        <p>No submissions yet</p>
-                    )}
-
-                    {submissions.map(sub => (
-
-                        <div
-                            key={sub.id}
-                            style={{
-                                border: "1px solid #ddd",
-                                padding: "15px",
-                                marginTop: "15px",
-                                borderRadius: "8px"
-                            }}
-                        >
-
-                            <p><strong>Group:</strong> {sub.groupId}</p>
-
-                            <p><strong>Status:</strong> {sub.status}</p>
-
-                            <div>
-
-                                {sub.reportUrl && (
-                                    <a href={sub.reportUrl} target="_blank">
-                                        Download Report
-                                    </a>
-                                )}
-
-                                <br />
-
-                                {sub.pptUrl && (
-                                    <a href={sub.pptUrl} target="_blank">
-                                        Download PPT
-                                    </a>
-                                )}
-
-                            </div>
-
-                        </div>
-
-                    ))}
-
                 </div>
 
             </div>
 
         </div>
+    );
 
+}
+
+// ===============================
+// STAT CARD COMPONENT
+// ===============================
+function StatCard({ title, value }) {
+
+    return (
+        <div className="card" style={{
+            textAlign: "center",
+            padding: "20px"
+        }}>
+            <h4 style={{ color: "#666" }}>{title}</h4>
+            <h2 style={{ color: "#1565C0" }}>{value}</h2>
+        </div>
     );
 
 }

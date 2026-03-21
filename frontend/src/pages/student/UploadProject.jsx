@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
+import Preloader from "../../components/Preloader";
 
 const BASE_URL = "http://127.0.0.1:8000";
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 export default function UploadProject() {
 
@@ -11,7 +12,11 @@ export default function UploadProject() {
     const [report, setReport] = useState(null);
     const [ppt, setPpt] = useState(null);
     const [images, setImages] = useState([]);
-    const [loading, setLoading] = useState(false);
+
+    const [pageLoading, setPageLoading] = useState(true);
+    const [uploading, setUploading] = useState(false);
+
+    const [toast, setToast] = useState(null);
 
     const getToken = () => localStorage.getItem("token");
 
@@ -19,124 +24,94 @@ export default function UploadProject() {
         fetchGroup();
     }, []);
 
+    // =============================
+    // TOAST
+    // =============================
+    const showToast = (msg, type = "info") => {
+        setToast({ msg, type });
+        setTimeout(() => setToast(null), 3000);
+    };
+
+    // =============================
+    // FETCH GROUP
+    // =============================
     const fetchGroup = async () => {
-
         try {
-
-            const res = await fetch(`${BASE_URL}/my-group`, {
-                headers: {
-                    Authorization: `Bearer ${getToken()}`
-                }
+            const res = await fetch(`${BASE_URL}/groups/my-group`, {
+                headers: { Authorization: `Bearer ${getToken()}` }
             });
 
             const data = await res.json();
 
-            if (res.ok && data.projectName) {
+            if (res.ok && data.groupId) {
                 setGroup(data);
             }
 
         } catch {
-
-            alert("Server error");
-
+            showToast("Server error", "error");
         }
+
+        setPageLoading(false);
     };
 
-    // ===============================
-    // FILE VALIDATION
-    // ===============================
+    // =============================
+    // VALIDATION
+    // =============================
     const validateFiles = () => {
 
         if (report) {
+            if (!report.name.toLowerCase().endsWith(".pdf"))
+                return showToast("Report must be PDF", "error"), false;
 
-            if (!report.name.toLowerCase().endsWith(".pdf")) {
-                alert("Final report must be PDF");
-                return false;
-            }
-
-            if (report.size > MAX_FILE_SIZE) {
-                alert("Report must be less than 10MB");
-                return false;
-            }
-
+            if (report.size > MAX_FILE_SIZE)
+                return showToast("Report <10MB only", "error"), false;
         }
 
         if (ppt) {
-
             const valid =
-                ppt.name.toLowerCase().endsWith(".ppt") ||
-                ppt.name.toLowerCase().endsWith(".pptx") ||
-                ppt.name.toLowerCase().endsWith(".pdf");
+                ppt.name.endsWith(".ppt") ||
+                ppt.name.endsWith(".pptx") ||
+                ppt.name.endsWith(".pdf");
 
-            if (!valid) {
-                alert("Presentation must be PPT, PPTX, or PDF");
-                return false;
-            }
-
-            if (ppt.size > MAX_FILE_SIZE) {
-                alert("Presentation must be less than 10MB");
-                return false;
-            }
-
+            if (!valid)
+                return showToast("Presentation must be PPT/PDF", "error"), false;
         }
 
-        if (images.length > 0) {
+        for (let img of images) {
+            if (!["image/png", "image/jpeg"].includes(img.type))
+                return showToast("Images must be JPG/PNG", "error"), false;
 
-            for (let img of images) {
-
-                const validImage =
-                    img.type === "image/jpeg" ||
-                    img.type === "image/png";
-
-                if (!validImage) {
-                    alert("Images must be JPG or PNG");
-                    return false;
-                }
-
-                if (img.size > MAX_FILE_SIZE) {
-                    alert("Each image must be less than 10MB");
-                    return false;
-                }
-
-            }
-
+            if (img.size > MAX_FILE_SIZE)
+                return showToast("Image <10MB", "error"), false;
         }
 
         return true;
     };
 
-    // ===============================
-    // HANDLE UPLOAD
-    // ===============================
+    // =============================
+    // UPLOAD
+    // =============================
     const handleUpload = async () => {
 
-        if (!group || !group.groupId) {
-            alert("Create a group first");
-            return;
-        }
+        if (!group) return showToast("Create group first", "error");
 
-        if (!report && !ppt && images.length === 0) {
-            alert("Select at least one file");
-            return;
-        }
+        if (!report && !ppt && images.length === 0)
+            return showToast("Select at least one file", "error");
 
         if (!validateFiles()) return;
 
         try {
 
-            setLoading(true);
+            setUploading(true);
 
             const formData = new FormData();
 
             if (report) formData.append("report", report);
             if (ppt) formData.append("ppt", ppt);
-
-            images.forEach((img) => {
-                formData.append("images", img);
-            });
+            images.forEach(img => formData.append("images", img));
 
             const res = await fetch(
-                `${BASE_URL}/upload-project/${group.groupId}`,
+                `${BASE_URL}/groups/upload-project/${group.groupId}`,
                 {
                     method: "POST",
                     headers: {
@@ -148,22 +123,23 @@ export default function UploadProject() {
 
             const data = await res.json();
 
-            if (!res.ok) {
-                alert(data.detail || "Upload failed");
-                return;
-            }
+            if (!res.ok)
+                return showToast(data.detail || "Upload failed", "error");
 
-            alert("Project files uploaded successfully");
+            showToast("Uploaded successfully 🚀", "success");
+
+            setReport(null);
+            setPpt(null);
+            setImages([]);
 
         } catch {
-
-            alert("Server error");
-
+            showToast("Server error", "error");
         }
 
-        setLoading(false);
-
+        setUploading(false);
     };
+
+    if (pageLoading) return <Preloader />;
 
     return (
 
@@ -172,64 +148,81 @@ export default function UploadProject() {
             <Header />
             <Sidebar role="student" />
 
+            {/* TOAST */}
+            {toast && (
+                <div style={{
+                    position: "fixed",
+                    top: "20px",
+                    right: "20px",
+                    background:
+                        toast.type === "success" ? "#2E7D32" :
+                            toast.type === "error" ? "#D32F2F" :
+                                "#1565C0",
+                    color: "white",
+                    padding: "12px 18px",
+                    borderRadius: "8px",
+                    zIndex: 9999
+                }}>
+                    {toast.msg}
+                </div>
+            )}
+
             <div className="main">
 
-                <div className="card">
+                <div className="card" style={{
+                    borderRadius: "16px",
+                    boxShadow: "0 10px 30px rgba(0,0,0,0.1)"
+                }}>
 
-                    <h2 style={{ color: "#0B3D91" }}>
-                        Upload Project Files
+                    <h2 style={{ color: "#1565C0" }}>
+                        📤 Upload Project Files
                     </h2>
 
                     {!group ? (
 
-                        <p>No group created yet.</p>
+                        <p>No group found</p>
 
                     ) : (
 
                         <>
 
-                            <p>
-                                <strong>Project:</strong> {group.projectName}
-                            </p>
+                            {/* PROJECT INFO */}
+                            <div style={{
+                                background: "#F5F9FF",
+                                padding: "15px",
+                                borderRadius: "12px",
+                                marginBottom: "20px"
+                            }}>
+                                <p><strong>{group.projectName}</strong></p>
+                                <p>ID: {group.groupId}</p>
 
-                            <p>
-                                <strong>Status:</strong> {group.status}
-                            </p>
+                                <span style={{
+                                    background: "#E3F2FD",
+                                    padding: "4px 10px",
+                                    borderRadius: "10px",
+                                    fontSize: "12px"
+                                }}>
+                                    {group.status}
+                                </span>
+                            </div>
 
-                            <hr style={{ margin: "15px 0" }} />
+                            {/* FILE INPUTS */}
+                            <FileInput label="Final Report" file={report} onChange={(e) => setReport(e.target.files[0])} />
+                            <FileInput label="Presentation" file={ppt} onChange={(e) => setPpt(e.target.files[0])} />
+                            <FileInput label="Project Images" files={images} multiple onChange={(e) => setImages([...e.target.files])} />
 
-                            <label>Upload Final Report (PDF)</label>
-                            <input
-                                type="file"
-                                className="input"
-                                accept=".pdf"
-                                onChange={(e) => setReport(e.target.files[0])}
-                            />
-
-                            <label>Upload Presentation (PPT / PPTX / PDF)</label>
-                            <input
-                                type="file"
-                                className="input"
-                                accept=".ppt,.pptx,.pdf"
-                                onChange={(e) => setPpt(e.target.files[0])}
-                            />
-
-                            <label>Upload Project Images</label>
-                            <input
-                                type="file"
-                                className="input"
-                                multiple
-                                accept="image/png,image/jpeg"
-                                onChange={(e) => setImages([...e.target.files])}
-                            />
-
+                            {/* BUTTON */}
                             <button
                                 className="btn-primary"
-                                style={{ marginTop: "15px" }}
+                                style={{
+                                    width: "100%",
+                                    marginTop: "20px",
+                                    padding: "12px"
+                                }}
                                 onClick={handleUpload}
-                                disabled={loading}
+                                disabled={uploading}
                             >
-                                {loading ? "Uploading..." : "Upload Files"}
+                                {uploading ? "Uploading..." : "🚀 Upload Files"}
                             </button>
 
                         </>
@@ -241,7 +234,91 @@ export default function UploadProject() {
             </div>
 
         </div>
-
     );
+}
 
+
+// =============================
+// PREMIUM FILE INPUT
+// =============================
+function FileInput({ label, onChange, file, files, multiple }) {
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        const dropped = e.dataTransfer.files;
+
+        if (multiple) {
+            onChange({ target: { files: dropped } });
+        } else {
+            onChange({ target: { files: [dropped[0]] } });
+        }
+    };
+
+    return (
+        <div style={{ marginBottom: "20px" }}>
+
+            <label style={{ fontWeight: "600" }}>{label}</label>
+
+            <div
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={handleDrop}
+                onClick={() => document.getElementById(label).click()}
+                style={{
+                    border: "2px dashed #1565C0",
+                    borderRadius: "12px",
+                    padding: "20px",
+                    textAlign: "center",
+                    background: "#F5F9FF",
+                    cursor: "pointer",
+                    marginTop: "8px"
+                }}
+            >
+
+                📁 Drag & Drop or Click to Upload
+
+                <input
+                    id={label}
+                    type="file"
+                    multiple={multiple}
+                    onChange={onChange}
+                    style={{ display: "none" }}
+                />
+
+            </div>
+
+            {/* FILE PREVIEW */}
+            {file && <FileCard name={file.name} />}
+
+            {files && files.length > 0 && (
+                <div style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))",
+                    gap: "10px",
+                    marginTop: "10px"
+                }}>
+                    {files.map((f, i) => (
+                        <FileCard key={i} name={f.name} />
+                    ))}
+                </div>
+            )}
+
+        </div>
+    );
+}
+
+
+// =============================
+// FILE CARD
+// =============================
+function FileCard({ name }) {
+    return (
+        <div style={{
+            padding: "10px",
+            background: "white",
+            borderRadius: "10px",
+            boxShadow: "0 4px 10px rgba(0,0,0,0.08)"
+        }}>
+            📄 {name}
+        </div>
+    );
 }

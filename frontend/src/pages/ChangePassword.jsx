@@ -1,42 +1,58 @@
-import Header from "../components/Header";
-import Sidebar from "../components/Sidebar";
+import { useState } from "react";
+import { api } from "../services/api";
 
 export default function ChangePassword() {
 
+    const [password, setPassword] = useState("");
+
+    const updatePassword = async () => {
+
+        if (password.length < 6) {
+            alert("Password must be at least 6 characters");
+            return;
+        }
+
+        try {
+
+            const res = await api.resetPassword(password);
+
+            alert(res.message);
+
+            setPassword("");
+
+        } catch (error) {
+
+            alert("Password update failed");
+
+        }
+
+    };
+
     return (
 
-        <div>
+        <div className="card">
 
-            <Header />
+            <h3 style={{ color: "#0B3D91" }}>
+                Change Password
+            </h3>
 
-            <div className="main">
+            <input
+                type="password"
+                placeholder="New Password"
+                className="input"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+            />
 
-                <div className="card">
-
-                    <h2>Change Password</h2>
-
-                    <label>Old Password</label>
-
-                    <input type="password" className="input" />
-
-                    <label>New Password</label>
-
-                    <input type="password" className="input" />
-
-                    <label>Confirm Password</label>
-
-                    <input type="password" className="input" />
-
-                    <button className="btn-primary">
-                        Update Password
-                    </button>
-
-                </div>
-
-            </div>
+            <button
+                className="btn-primary"
+                style={{ marginTop: "10px" }}
+                onClick={updatePassword}
+            >
+                Update Password
+            </button>
 
         </div>
 
     );
-
 }

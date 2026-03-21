@@ -1,42 +1,88 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+/* ===== GLOBAL ===== */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+body {
+  background: #f4f6f9;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* ===== HEADER ===== */
+
+.header {
+  height: 70px;
+  background: white;
+  border-bottom: 1px solid #ddd;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 0 25px;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+/* ===== SIDEBAR ===== */
+
+.sidebar {
+  width: 230px;
+  height: 100vh;
+  background: #1f2d3d;
+  color: white;
+
+  position: fixed;
+  top: 70px;
+  left: 0;
+
+  padding-top: 20px;
 }
+
+.sidebar-item {
+  padding: 14px 25px;
+  cursor: pointer;
+}
+
+.sidebar-item:hover {
+  background: #32465a;
+}
+
+.sidebar-item.active {
+  background: #007bff;
+}
+
+/* ===== MAIN CONTENT ===== */
+
+.main-content {
+  margin-left: 230px;
+  margin-top: 70px;
+  padding: 25px;
+}
+
+/* ===== BUTTON ===== */
+
+.btn-accent {
+  background: #007bff;
+  border: none;
+  color: white;
+
+  padding: 8px 18px;
+  border-radius: 6px;
+
+  cursor: pointer;
+}
+
+.btn-accent:hover {
+  background: #0056b3;
+}
+
+/* ===== CARD ===== */
 
 .card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
 }

@@ -23,13 +23,13 @@ export default function ManageStudents() {
             if (Array.isArray(response)) {
                 setStudents(response);
             } else {
-                alert("Failed to load students");
+                setStudents([]);
             }
 
         } catch (err) {
 
-            console.error(err);
-            alert("Server error");
+            console.error("Fetch students error:", err);
+            alert("Failed to load students");
 
         } finally {
 
@@ -38,6 +38,11 @@ export default function ManageStudents() {
         }
 
     };
+
+
+    // =============================
+    // CONTACT STUDENT
+    // =============================
 
     const contactStudent = (phone) => {
 
@@ -55,33 +60,43 @@ export default function ManageStudents() {
 
     };
 
+
     // =============================
     // REMOVE STUDENT
     // =============================
+
     const removeStudent = async (uid) => {
 
-        if (!window.confirm("Are you sure you want to remove this student?"))
+        if (!window.confirm("Remove this student permanently?"))
             return;
 
         try {
 
             const res = await api.deleteUser(uid);
 
-            if (res.message) {
+            if (res?.message) {
+
                 alert("Student removed successfully");
-                fetchStudents();
+
+                setStudents(prev =>
+                    prev.filter(s => s.uid !== uid)
+                );
+
             } else {
-                alert(res.detail || "Failed to remove student");
+
+                alert(res?.detail || "Failed to remove student");
+
             }
 
         } catch (err) {
 
-            console.error(err);
-            alert("Server error");
+            console.error("Delete student error:", err);
+            alert("Server error while removing student");
 
         }
 
     };
+
 
     return (
 
@@ -94,29 +109,42 @@ export default function ManageStudents() {
 
                 <div className="card">
 
-                    <h2 style={{ color: "#0B3D91" }}>
+                    <h2 style={{ color: "#0B3D91", marginBottom: "20px" }}>
                         Manage Students
                     </h2>
 
-                    {loading && <p>Loading students...</p>}
+
+                    {/* LOADING */}
+
+                    {loading && (
+                        <p style={{ color: "#777" }}>
+                            Loading students...
+                        </p>
+                    )}
+
+
+                    {/* NO STUDENTS */}
 
                     {!loading && students.length === 0 && (
                         <p>No students found</p>
                     )}
 
+
+                    {/* STUDENT TABLE */}
+
                     {!loading && students.length > 0 && (
 
-                        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                        <table>
 
                             <thead style={{ background: "#0B3D91", color: "white" }}>
 
                                 <tr>
 
-                                    <th style={{ padding: "10px" }}>Name</th>
-                                    <th style={{ padding: "10px" }}>USN</th>
-                                    <th style={{ padding: "10px" }}>Email</th>
-                                    <th style={{ padding: "10px" }}>Phone</th>
-                                    <th style={{ padding: "10px" }}>Action</th>
+                                    <th>Name</th>
+                                    <th>USN</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Action</th>
 
                                 </tr>
 
@@ -128,23 +156,19 @@ export default function ManageStudents() {
 
                                     <tr key={student.uid}>
 
-                                        <td style={{ padding: "10px" }}>
-                                            {student.name}
+                                        <td>{student.name || "N/A"}</td>
+
+                                        <td>{student.usn || "N/A"}</td>
+
+                                        <td>{student.email}</td>
+
+                                        <td>
+                                            {student.phone
+                                                ? student.phone
+                                                : "Not Available"}
                                         </td>
 
-                                        <td style={{ padding: "10px" }}>
-                                            {student.usn}
-                                        </td>
-
-                                        <td style={{ padding: "10px" }}>
-                                            {student.email}
-                                        </td>
-
-                                        <td style={{ padding: "10px" }}>
-                                            {student.phone || "Not Available"}
-                                        </td>
-
-                                        <td style={{ padding: "10px" }}>
+                                        <td>
 
                                             <button
                                                 className="btn-primary"

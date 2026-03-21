@@ -15,6 +15,7 @@ export default function ManageGuides() {
     // ==========================
     // FETCH GUIDES
     // ==========================
+
     const fetchGuides = async () => {
 
         setLoading(true);
@@ -26,13 +27,13 @@ export default function ManageGuides() {
             if (Array.isArray(response)) {
                 setGuides(response);
             } else {
-                alert(response?.detail || "Failed to load guides");
+                setGuides([]);
             }
 
         } catch (err) {
 
-            console.error(err);
-            alert("Server error");
+            console.error("Fetch guides error:", err);
+            alert("Failed to load guides");
 
         } finally {
 
@@ -42,8 +43,9 @@ export default function ManageGuides() {
     };
 
     // ==========================
-    // CONTACT GUIDE (WHATSAPP)
+    // CONTACT GUIDE
     // ==========================
+
     const contactGuide = (phone) => {
 
         if (!phone) {
@@ -53,7 +55,8 @@ export default function ManageGuides() {
 
         const message = "Contact the Mini Project Coordinator";
 
-        const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+        const url =
+            `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 
         window.open(url, "_blank");
 
@@ -62,13 +65,11 @@ export default function ManageGuides() {
     // ==========================
     // REMOVE GUIDE
     // ==========================
+
     const removeGuide = async (uid) => {
 
-        const confirmDelete = window.confirm(
-            "Are you sure you want to remove this guide?"
-        );
-
-        if (!confirmDelete) return;
+        if (!window.confirm("Remove this guide permanently?"))
+            return;
 
         try {
 
@@ -77,7 +78,10 @@ export default function ManageGuides() {
             if (res?.message) {
 
                 alert("Guide removed successfully");
-                fetchGuides();
+
+                setGuides(prev =>
+                    prev.filter(g => g.uid !== uid)
+                );
 
             } else {
 
@@ -87,8 +91,8 @@ export default function ManageGuides() {
 
         } catch (err) {
 
-            console.error(err);
-            alert("Server error");
+            console.error("Delete guide error:", err);
+            alert("Server error while removing guide");
 
         }
 
@@ -105,35 +109,42 @@ export default function ManageGuides() {
 
                 <div className="card">
 
-                    <h2 style={{ color: "#0B3D91" }}>
+                    <h2 style={{ color: "#0B3D91", marginBottom: "20px" }}>
                         Manage Guides
                     </h2>
 
-                    {loading && <p>Loading guides...</p>}
+
+                    {/* LOADING */}
+
+                    {loading && (
+                        <p style={{ color: "#777" }}>
+                            Loading guides...
+                        </p>
+                    )}
+
+
+                    {/* NO GUIDES */}
 
                     {!loading && guides.length === 0 && (
                         <p>No guides found</p>
                     )}
 
+
+                    {/* GUIDE TABLE */}
+
                     {!loading && guides.length > 0 && (
 
-                        <table
-                            style={{
-                                width: "100%",
-                                borderCollapse: "collapse",
-                                marginTop: "10px"
-                            }}
-                        >
+                        <table>
 
                             <thead style={{ background: "#0B3D91", color: "white" }}>
 
                                 <tr>
 
-                                    <th style={{ padding: "10px" }}>Name</th>
-                                    <th style={{ padding: "10px" }}>Branch</th>
-                                    <th style={{ padding: "10px" }}>Email</th>
-                                    <th style={{ padding: "10px" }}>Phone</th>
-                                    <th style={{ padding: "10px" }}>Actions</th>
+                                    <th>Name</th>
+                                    <th>Branch</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Actions</th>
 
                                 </tr>
 
@@ -143,25 +154,21 @@ export default function ManageGuides() {
 
                                 {guides.map((guide) => (
 
-                                    <tr key={guide.uid} style={{ borderBottom: "1px solid #eee" }}>
+                                    <tr key={guide.uid}>
 
-                                        <td style={{ padding: "10px" }}>
-                                            {guide.name}
+                                        <td>{guide.name || "N/A"}</td>
+
+                                        <td>{guide.branch || "N/A"}</td>
+
+                                        <td>{guide.email}</td>
+
+                                        <td>
+                                            {guide.phone
+                                                ? guide.phone
+                                                : "Not Available"}
                                         </td>
 
-                                        <td style={{ padding: "10px" }}>
-                                            {guide.branch}
-                                        </td>
-
-                                        <td style={{ padding: "10px" }}>
-                                            {guide.email}
-                                        </td>
-
-                                        <td style={{ padding: "10px" }}>
-                                            {guide.phone || "Not Available"}
-                                        </td>
-
-                                        <td style={{ padding: "10px" }}>
+                                        <td>
 
                                             <button
                                                 className="btn-primary"

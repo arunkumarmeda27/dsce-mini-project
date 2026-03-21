@@ -5,117 +5,123 @@ export default function Sidebar({ role }) {
     const navigate = useNavigate();
     const location = useLocation();
 
-    const isActive = (path) =>
-        location.pathname === path ? "sidebar-item active" : "sidebar-item";
+    const isActive = (path) => location.pathname === path;
 
     const go = (path) => navigate(path);
 
+    const Item = ({ icon, label, path }) => {
+
+        const active = isActive(path);
+
+        return (
+            <div
+                onClick={() => go(path)}
+                style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                    padding: "10px 14px",
+                    borderRadius: "10px",
+                    cursor: "pointer",
+                    marginBottom: "6px",
+                    transition: "all 0.3s ease",
+                    background: active ? "#1565C0" : "transparent",
+                    color: active ? "white" : "#333",
+                    boxShadow: active
+                        ? "0 4px 12px rgba(21,101,192,0.4)"
+                        : "none"
+                }}
+                onMouseEnter={(e) => {
+                    if (!active) e.currentTarget.style.background = "#F5F9FF";
+                }}
+                onMouseLeave={(e) => {
+                    if (!active) e.currentTarget.style.background = "transparent";
+                }}
+            >
+                <span style={{ fontSize: "18px" }}>{icon}</span>
+                <span style={{ fontWeight: "500" }}>{label}</span>
+            </div>
+        );
+    };
+
     return (
 
-        <div className="sidebar">
+        <div style={{
+            width: "230px",
+            height: "100vh",
+            background: "linear-gradient(180deg,#ffffff,#F5F9FF)",
+            borderRight: "1px solid #eee",
+            padding: "20px 15px",
+            position: "fixed",
+            left: 0,
+            top: 0
+        }}>
 
-            {/* ================= DASHBOARD ================= */}
-            <div
-                className={isActive(`/${role}`)}
-                onClick={() => go(`/${role}`)}
-            >
-                Dashboard
+            {/* TITLE */}
+            <div style={{
+                fontSize: "18px",
+                fontWeight: "bold",
+                color: "#1565C0",
+                marginBottom: "25px"
+            }}>
+                🚀 Project Portal
             </div>
 
+            {/* DASHBOARD */}
+            <Item icon="📊" label="Dashboard" path={`/${role}`} />
 
-            {/* ================= STUDENT MENU ================= */}
+            {/* STUDENT */}
             {role === "student" && (
-
                 <>
-                    <div className="sidebar-section">
-                        Student Menu
-                    </div>
+                    <Section title="Student Panel" />
 
-                    <div
-                        className={isActive("/create-group")}
-                        onClick={() => go("/create-group")}
-                    >
-                        Create Group
-                    </div>
-
-                    <div
-                        className={isActive("/group-status")}
-                        onClick={() => go("/group-status")}
-                    >
-                        Group Status
-                    </div>
-
-                    <div
-                        className={isActive("/upload")}
-                        onClick={() => go("/upload")}
-                    >
-                        Upload Project
-                    </div>
+                    <Item icon="👥" label="Create Group" path="/create-group" />
+                    <Item icon="📄" label="Group Status" path="/group-status" />
+                    <Item icon="⬆" label="Upload Project" path="/upload" />
                 </>
-
             )}
 
-
-            {/* ================= ADMIN MENU ================= */}
+            {/* ADMIN */}
             {role === "admin" && (
-
                 <>
-                    <div className="sidebar-section">
-                        Admin Controls
-                    </div>
+                    <Section title="Admin Controls" />
 
-                    <div
-                        className={isActive("/approvals")}
-                        onClick={() => go("/approvals")}
-                    >
-                        Approve Users
-                    </div>
-
-                    <div
-                        className={isActive("/manage-students")}
-                        onClick={() => go("/manage-students")}
-                    >
-                        Manage Students
-                    </div>
-
-                    <div
-                        className={isActive("/manage-guides")}
-                        onClick={() => go("/manage-guides")}
-                    >
-                        Manage Guides
-                    </div>
-
-                    <div
-                        className={isActive("/manage-groups")}
-                        onClick={() => go("/manage-groups")}
-                    >
-                        Manage Groups
-                    </div>
+                    <Item icon="✅" label="Approve Users" path="/approvals" />
+                    <Item icon="🎓" label="Manage Students" path="/manage-students" />
+                    <Item icon="🧑‍🏫" label="Manage Guides" path="/manage-guides" />
+                    <Item icon="📁" label="Manage Groups" path="/manage-groups" />
                 </>
-
             )}
 
-
-            {/* ================= GUIDE MENU ================= */}
+            {/* GUIDE */}
             {role === "guide" && (
-
                 <>
-                    <div className="sidebar-section">
-                        Guide Panel
-                    </div>
+                    <Section title="Guide Panel" />
 
-                    <div
-                        className={isActive("/guide")}
-                        onClick={() => go("/guide")}
-                    >
-                        My Projects
-                    </div>
+                    <Item icon="📚" label="My Projects" path="/guide" />
                 </>
-
             )}
 
         </div>
 
     );
+}
 
+
+// =======================
+// SECTION TITLE
+// =======================
+function Section({ title }) {
+
+    return (
+        <div style={{
+            fontSize: "12px",
+            color: "#888",
+            marginTop: "20px",
+            marginBottom: "10px",
+            paddingLeft: "5px"
+        }}>
+            {title}
+        </div>
+    );
 }

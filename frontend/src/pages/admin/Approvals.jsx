@@ -1,15 +1,12 @@
 import { useEffect, useState } from "react";
 import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
-
-const BASE_URL = "http://127.0.0.1:8000";
+import { api } from "../../services/api";
 
 export default function Approvals() {
 
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
-
-    const getToken = () => localStorage.getItem("token");
 
     useEffect(() => {
         fetchUsers();
@@ -24,24 +21,15 @@ export default function Approvals() {
 
         try {
 
-            const res = await fetch(`${BASE_URL}/pending-users`, {
-                headers: {
-                    Authorization: `Bearer ${getToken()}`
-                }
-            });
+            const data = await api.getPendingUsers();
 
-            const data = await res.json();
-
-            if (!res.ok) {
-                alert(data.detail || "Error fetching users");
-                setLoading(false);
-                return;
-            }
-
-            setUsers(data);
+            setUsers(data || []);
 
         } catch (error) {
-            alert("Server error while fetching users");
+
+            console.error(error);
+            alert("Error fetching users");
+
         }
 
         setLoading(false);
@@ -54,10 +42,10 @@ export default function Approvals() {
 
         try {
 
-            const res = await fetch(`${BASE_URL}/approve/${uid}`, {
+            const res = await fetch(`http://127.0.0.1:8000/users/approve/${uid}`, {
                 method: "PUT",
                 headers: {
-                    Authorization: `Bearer ${getToken()}`
+                    Authorization: `Bearer ${localStorage.getItem("token")}`
                 }
             });
 
@@ -70,11 +58,14 @@ export default function Approvals() {
 
             alert("User approved successfully");
 
-            fetchUsers(); // Refresh list
+            fetchUsers();
 
         } catch (error) {
+
             alert("Server error during approval");
+
         }
+
     };
 
     // -----------------------------
@@ -82,15 +73,18 @@ export default function Approvals() {
     // -----------------------------
     const rejectUser = async (uid) => {
 
-        const confirmDelete = window.confirm("Are you sure you want to reject this user?");
+        const confirmDelete = window.confirm(
+            "Are you sure you want to reject this user?"
+        );
+
         if (!confirmDelete) return;
 
         try {
 
-            const res = await fetch(`${BASE_URL}/reject/${uid}`, {
+            const res = await fetch(`http://127.0.0.1:8000/users/reject/${uid}`, {
                 method: "DELETE",
                 headers: {
-                    Authorization: `Bearer ${getToken()}`
+                    Authorization: `Bearer ${localStorage.getItem("token")}`
                 }
             });
 
@@ -103,11 +97,14 @@ export default function Approvals() {
 
             alert("User rejected successfully");
 
-            fetchUsers(); // Refresh list
+            fetchUsers();
 
         } catch (error) {
+
             alert("Server error during rejection");
+
         }
+
     };
 
     // -----------------------------
@@ -115,6 +112,7 @@ export default function Approvals() {
     // -----------------------------
     return (
         <div>
+
             <Header />
             <Sidebar role="admin" />
 
@@ -176,6 +174,7 @@ export default function Approvals() {
                 </div>
 
             </div>
+
         </div>
     );
 }

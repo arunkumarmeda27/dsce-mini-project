@@ -1,26 +1,25 @@
 import { auth } from "../firebase/config";
 
-// Keep only this one! It will use the Vercel variable you added.
-const BASE_URL = import.meta.env.VITE_API_URL || "https://dsce-mini-project.onrender.com";
-
-// DELETE the other line that says const BASE_URL = "https://..."
+const BASE_URL = "http://127.0.0.1:8000";
 
 // =================================
-// GET FRESH FIREBASE TOKEN
+// GET FIREBASE TOKEN
 // =================================
 const getToken = async () => {
 
     const user = auth.currentUser;
 
-    if (!user) return null;
+    if (!user) {
+        console.warn("No logged in user");
+        return null;
+    }
 
     const token = await user.getIdToken(true);
-
     localStorage.setItem("token", token);
 
     return token;
-};
 
+};
 
 // =================================
 // RESPONSE HANDLER
@@ -28,22 +27,26 @@ const getToken = async () => {
 const handleResponse = async (res) => {
 
     if (res.status === 401) {
-
         localStorage.removeItem("token");
         window.location.href = "/";
         return;
-
     }
 
-    const data = await res.json();
+    let data;
+
+    try {
+        data = await res.json();
+    } catch {
+        data = {};
+    }
 
     if (!res.ok) {
         throw new Error(data.detail || "Server Error");
     }
 
     return data;
-};
 
+};
 
 // =================================
 // FETCH WRAPPER
@@ -54,7 +57,7 @@ const fetchWithAuth = async (url, options = {}) => {
 
     const headers = {
         ...(options.headers || {}),
-        Authorization: `Bearer ${token}`
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
     };
 
     const res = await fetch(`${BASE_URL}${url}`, {
@@ -63,8 +66,8 @@ const fetchWithAuth = async (url, options = {}) => {
     });
 
     return handleResponse(res);
-};
 
+};
 
 // =================================
 // API METHODS
@@ -72,168 +75,124 @@ const fetchWithAuth = async (url, options = {}) => {
 export const api = {
 
     // =============================
-    // USER PROFILE
+    // USER
     // =============================
-    getUserProfile: async () => {
-        return fetchWithAuth("/user-profile");
-    },
+    getUserProfile: () => fetchWithAuth("/users/user-profile"),
 
-
-    // =============================
-    // CREATE GROUP
-    // =============================
-    createGroup: async (data) => {
-
-        return fetchWithAuth("/create-group", {
+    registerUser: (data) =>
+        fetchWithAuth("/users/register", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data)
-        });
+        }),
 
-    },
+    getPendingUsers: () => fetchWithAuth("/users/pending-users"),
+    getStudents: () => fetchWithAuth("/users/students"),
+    getGuides: () => fetchWithAuth("/users/guides"),
 
-
-    // =============================
-    // GET ELIGIBLE STUDENTS
-    // =============================
-    getEligibleStudents: async () => {
-        return fetchWithAuth("/eligible-students");
-    },
-
-
-    // =============================
-    // GET MY GROUP
-    // =============================
-    getMyGroup: async () => {
-        return fetchWithAuth("/my-group");
-    },
-
-
-    // =============================
-    // GET MY NOTIFICATIONS
-    // =============================
-    getMyNotifications: async () => {
-        return fetchWithAuth("/my-notifications");
-    },
-
-
-    // =============================
-    // ADMIN APIs
-    // =============================
-
-    getBranchGroups: async () => {
-        return fetchWithAuth("/branch-groups");
-    },
-
-    getStudents: async () => {
-        return fetchWithAuth("/students");
-    },
-
-    getGuides: async () => {
-        return fetchWithAuth("/guides");
-    },
-
-    getPendingUsers: async () => {
-        return fetchWithAuth("/pending-users");
-    },
-
-    approveUser: async (uid) => {
-
-        return fetchWithAuth(`/approve/${uid}`, {
-            method: "PUT"
-        });
-
-    },
-
-    rejectUser: async (uid) => {
-
-        return fetchWithAuth(`/reject/${uid}`, {
+    deleteUser: (uid) =>
+        fetchWithAuth(`/users/delete-user/${uid}`, {
             method: "DELETE"
-        });
+        }),
 
-    },
-
-
-    // =============================
-    // GROUP MANAGEMENT
-    // =============================
-
-    assignGuide: async (groupId, guideId) => {
-
-        return fetchWithAuth(
-            `/assign-guide/${groupId}?guide_id=${guideId}`,
-            { method: "PUT" }
-        );
-
-    },
-
-    guideDecision: async (groupId, decision) => {
-
-        return fetchWithAuth(
-            `/guide-decision/${groupId}?decision=${decision}`,
-            { method: "PUT" }
-        );
-
-    },
-
-    deleteGroup: async (groupId) => {
-
-        return fetchWithAuth(`/delete-group/${groupId}`, {
-            method: "DELETE"
-        });
-
-    },
-
-    editGroup: async (groupId, data) => {
-
-        return fetchWithAuth(`/edit-group/${groupId}`, {
+    resetPassword: (newPassword) =>
+        fetchWithAuth("/users/reset-password", {
             method: "PUT",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(data)
-        });
-
-    },
-
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ newPassword })
+        }),
 
     // =============================
-    // GUIDE DASHBOARD
+    // GUIDE ACTIONS
     // =============================
-
-    getGuideGroups: async () => {
-        return fetchWithAuth("/guide-groups");
-    },
-
+    guideDecision: (groupId, decision) =>
+        fetchWithAuth(`/groups/guide-decision/${groupId}?decision=${decision}`, {
+            method: "PUT"
+        }),
 
     // =============================
-    // NOTIFICATIONS
+    // GROUPS
     // =============================
+    getBranchGroups: () => fetchWithAuth("/groups/branch-groups"),
 
-    sendNotification: async (groupId, message) => {
-
-        return fetchWithAuth("/send-notification", {
+    createGroup: (data) =>
+        fetchWithAuth("/groups/create-group", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                groupId,
-                message
-            })
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+        }),
+
+    getMyGroup: () => fetchWithAuth("/groups/my-group"),
+
+    getGuideGroups: () => fetchWithAuth("/groups/guide-groups"),
+
+    // ✅ ASSIGN GUIDE
+    assignGuide: (groupId, guideId) =>
+        fetchWithAuth(`/groups/assign-guide/${groupId}?guide_id=${guideId}`, {
+            method: "PUT"
+        }),
+
+    // ✅ DELETE GROUP
+    deleteGroup: (groupId) =>
+        fetchWithAuth(`/groups/delete-group/${groupId}`, {
+            method: "DELETE"
+        }),
+
+    // =============================
+    // 🔔 NOTIFICATIONS (NEW 🔥)
+    // =============================
+    sendNotification: (groupId, target, message) =>
+        fetchWithAuth(
+            `/groups/send-notification/${groupId}?target=${target}&message=${encodeURIComponent(message)}`,
+            {
+                method: "POST"
+            }
+        ),
+
+    // ✅ GUIDE SEND NOTIFICATION
+    sendGuideNotification: (groupId, message) =>
+        fetchWithAuth(
+            `/groups/guide-send-notification/${groupId}?message=${encodeURIComponent(message)}`,
+            {
+                method: "POST"
+            }
+        ),
+
+    // ✅ CLEAR NOTIFICATIONS
+    clearNotifications: () =>
+        fetchWithAuth("/users/clear-notifications", {
+            method: "DELETE"
+        }),
+
+    // =============================
+    // PROJECT
+    // =============================
+    uploadProject: async (groupId, formData) => {
+
+        const token = await getToken();
+
+        const res = await fetch(`${BASE_URL}/groups/upload-project/${groupId}`, {
+            method: "POST",
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+            body: formData
         });
 
-    }
+        return handleResponse(res);
+    },
+
+    getGuideSubmissions: () => fetchWithAuth("/groups/guide-submissions"),
+
+    reviewSubmission: (submissionId, data) =>
+        fetchWithAuth(`/groups/review-submission/${submissionId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+        }),
+
+    // =============================
+    // FILE DOWNLOAD
+    // =============================
+    downloadFile: (filename) =>
+        `${BASE_URL}/groups/files/${filename}`
 
 };
-
-// DELETE USER (ADMIN)
-deleteUser: async (uid) => {
-
-    return fetchWithAuth(`/delete-user/${uid}`, {
-        method: "DELETE"
-    });
-
-}

@@ -27,19 +27,13 @@ export default function GroupStatus() {
                 return;
             }
 
-            const res = await fetch(`${BASE_URL}/my-group`, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
+            const res = await fetch(`${BASE_URL}/groups/my-group`, {
+                headers: { Authorization: `Bearer ${token}` }
             });
 
             if (res.ok) {
                 const data = await res.json();
-
-                // Only set if real group exists
-                if (data && data.projectName) {
-                    setGroup(data);
-                }
+                if (data?.groupId) setGroup(data);
             }
 
         } catch (err) {
@@ -49,7 +43,20 @@ export default function GroupStatus() {
         setLoading(false);
     };
 
-    // ✅ USE PRELOADER
+    // =========================
+    // STATUS COLOR
+    // =========================
+    const getStatusColor = (status) => {
+
+        switch (status) {
+            case "CREATED": return "#ECEFF1";
+            case "GUIDE_ASSIGNED": return "#FFF3E0";
+            case "GUIDE_ACCEPTED": return "#E8F5E9";
+            case "SUBMITTED": return "#E3F2FD";
+            default: return "#F5F5F5";
+        }
+    };
+
     if (loading) return <Preloader />;
 
     return (
@@ -61,81 +68,140 @@ export default function GroupStatus() {
 
             <div className="main">
 
-                <div className="card">
+                <div className="card" style={{
+                    borderRadius: "12px",
+                    boxShadow: "0 6px 25px rgba(0,0,0,0.08)"
+                }}>
 
-                    <h2 style={{ color: "#0B3D91" }}>
-                        Group Status
+                    <h2 style={{ color: "#1565C0" }}>
+                        📊 Group Status
                     </h2>
 
                     {!group ? (
-                        <p style={{ marginTop: "15px" }}>
+
+                        <p style={{ marginTop: "15px", color: "gray" }}>
                             No group created yet.
                         </p>
+
                     ) : (
 
-                        <div style={{ marginTop: "15px" }}>
+                        <div style={{ marginTop: "20px" }}>
 
-                            {/* ===== GROUP BASIC DETAILS ===== */}
+                            {/* HEADER INFO */}
+                            <div style={{
+                                display: "grid",
+                                gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))",
+                                gap: "10px"
+                            }}>
 
-                            <p><strong>Group ID:</strong> {group.groupId}</p>
-                            <p><strong>Project Name:</strong> {group.projectName}</p>
-                            <p><strong>Domain:</strong> {group.domain}</p>
+                                <InfoBox label="Group ID" value={group.groupId} />
+                                <InfoBox label="Project" value={group.projectName} />
+                                <InfoBox label="Domain" value={group.domain} />
 
-                            <p>
-                                <strong>Group Leader:</strong>{" "}
-                                {
-                                    group.members?.find(
-                                        m => m.uid === group.leaderId
-                                    )?.name || "-"
-                                }
-                            </p>
+                                <InfoBox
+                                    label="Leader"
+                                    value={
+                                        group.members?.find(
+                                            m => m.uid === group.leaderId
+                                        )?.name || "-"
+                                    }
+                                />
 
-                            {/* ===== MEMBERS ===== */}
+                            </div>
 
-                            <h4 style={{ marginTop: "15px", color: "#0B3D91" }}>
-                                Group Members
+                            {/* STATUS */}
+                            <div style={{ marginTop: "20px" }}>
+
+                                <span style={{
+                                    padding: "6px 14px",
+                                    borderRadius: "20px",
+                                    background: getStatusColor(group.status),
+                                    fontWeight: "bold"
+                                }}>
+                                    {group.status}
+                                </span>
+
+                            </div>
+
+                            {/* GUIDE */}
+                            <div style={{ marginTop: "15px" }}>
+
+                                <span style={{
+                                    padding: "6px 14px",
+                                    borderRadius: "20px",
+                                    background: group.guideId ? "#E8F5E9" : "#FFF3E0"
+                                }}>
+                                    👨‍🏫 Guide:{" "}
+                                    {group.guideId && group.guideName
+                                        ? group.guideName
+                                        : "Not Assigned"}
+                                </span>
+
+                            </div>
+
+                            {/* MEMBERS TABLE */}
+                            <h4 style={{
+                                marginTop: "25px",
+                                color: "#1565C0"
+                            }}>
+                                👥 Group Members
                             </h4>
 
-                            <table style={{ width: "100%", marginTop: "10px", borderCollapse: "collapse" }}>
+                            <table style={{
+                                width: "100%",
+                                marginTop: "10px",
+                                borderCollapse: "collapse",
+                                borderRadius: "10px",
+                                overflow: "hidden"
+                            }}>
 
-                                <thead style={{ background: "#0B3D91", color: "white" }}>
+                                <thead style={{
+                                    background: "#1565C0",
+                                    color: "white"
+                                }}>
                                     <tr>
-                                        <th style={{ padding: "8px", textAlign: "left" }}>Name</th>
-                                        <th style={{ padding: "8px", textAlign: "left" }}>USN</th>
+                                        <th style={{ padding: "10px" }}>Name</th>
+                                        <th style={{ padding: "10px" }}>USN</th>
                                     </tr>
                                 </thead>
 
                                 <tbody>
+
                                     {group.members?.map(member => (
-                                        <tr key={member.uid}>
-                                            <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>
+
+                                        <tr key={member.uid}
+                                            style={{
+                                                background:
+                                                    member.uid === group.leaderId
+                                                        ? "#E3F2FD"
+                                                        : "white"
+                                            }}
+                                        >
+
+                                            <td style={{
+                                                padding: "10px",
+                                                borderBottom: "1px solid #eee"
+                                            }}>
                                                 {member.name}
-                                                {member.uid === group.leaderId && " (Leader)"}
+                                                {member.uid === group.leaderId &&
+                                                    " ⭐"
+                                                }
                                             </td>
-                                            <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>
+
+                                            <td style={{
+                                                padding: "10px",
+                                                borderBottom: "1px solid #eee"
+                                            }}>
                                                 {member.usn || "-"}
                                             </td>
+
                                         </tr>
+
                                     ))}
+
                                 </tbody>
 
                             </table>
-
-                            {/* ===== GUIDE INFO ===== */}
-
-                            <div style={{ marginTop: "20px" }}>
-
-                                <p>
-                                    <strong>Guide Name:</strong>{" "}
-                                    {group.guideName ? group.guideName : "Not Assigned"}
-                                </p>
-
-                                <p>
-                                    <strong>Guide Status:</strong>{" "}
-                                    {group.status}
-                                </p>
-
-                            </div>
 
                         </div>
 
@@ -145,6 +211,29 @@ export default function GroupStatus() {
 
             </div>
 
+        </div>
+    );
+}
+
+
+// =========================
+// SMALL COMPONENT
+// =========================
+function InfoBox({ label, value }) {
+
+    return (
+        <div style={{
+            padding: "12px",
+            background: "#F5F9FF",
+            borderRadius: "10px",
+            borderLeft: "4px solid #1565C0"
+        }}>
+            <div style={{ fontSize: "12px", color: "#777" }}>
+                {label}
+            </div>
+            <div style={{ fontWeight: "bold" }}>
+                {value}
+            </div>
         </div>
     );
 }

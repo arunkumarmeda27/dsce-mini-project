@@ -5,6 +5,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 
 /* ================= STUDENT PAGES ================= */
+import CompleteProfile from "./pages/CompleteProfile";
 import StudentDashboard from "./pages/student/StudentDashboard";
 import CreateGroup from "./pages/student/CreateGroup";
 import GroupStatus from "./pages/student/GroupStatus";
@@ -19,6 +20,22 @@ import ManageGuides from "./pages/admin/ManageGuides";
 
 /* ================= GUIDE PAGES ================= */
 import GuideDashboard from "./pages/guide/GuideDashboard";
+import ViewFiles from "./pages/guide/ViewFiles";
+
+/* ================= AUTH CHECK ================= */
+const isLoggedIn = () => {
+  return localStorage.getItem("token");
+};
+
+/* ================= PROTECTED ROUTE ================= */
+const ProtectedRoute = ({ children }) => {
+  return isLoggedIn() ? children : <Navigate to="/" />;
+};
+
+/* ================= PUBLIC ROUTE ================= */
+const PublicRoute = ({ children }) => {
+  return isLoggedIn() ? <Navigate to="/student" /> : children;
+};
 
 export default function App() {
 
@@ -29,24 +46,89 @@ export default function App() {
       <Routes>
 
         {/* ================= AUTH ================= */}
-        <Route path="/" element={<Login />} />
+        <Route path="/" element={
+          <PublicRoute>
+            <Login />
+          </PublicRoute>
+        } />
+
         <Route path="/signup" element={<Signup />} />
 
+        {/* ================= PROFILE ================= */}
+        <Route path="/complete-profile" element={
+          <ProtectedRoute>
+            <CompleteProfile />
+          </ProtectedRoute>
+        } />
+
         {/* ================= STUDENT ================= */}
-        <Route path="/student" element={<StudentDashboard />} />
-        <Route path="/create-group" element={<CreateGroup />} />
-        <Route path="/group-status" element={<GroupStatus />} />
-        <Route path="/upload" element={<UploadProject />} />
+        <Route path="/student" element={
+          <ProtectedRoute>
+            <StudentDashboard />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/create-group" element={
+          <ProtectedRoute>
+            <CreateGroup />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/group-status" element={
+          <ProtectedRoute>
+            <GroupStatus />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/upload" element={
+          <ProtectedRoute>
+            <UploadProject />
+          </ProtectedRoute>
+        } />
 
         {/* ================= ADMIN ================= */}
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/approvals" element={<Approvals />} />
-        <Route path="/manage-groups" element={<ManageGroups />} />
-        <Route path="/manage-students" element={<ManageStudents />} />
-        <Route path="/manage-guides" element={<ManageGuides />} />
+        <Route path="/admin" element={
+          <ProtectedRoute>
+            <AdminDashboard />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/approvals" element={
+          <ProtectedRoute>
+            <Approvals />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/manage-groups" element={
+          <ProtectedRoute>
+            <ManageGroups />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/manage-students" element={
+          <ProtectedRoute>
+            <ManageStudents />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/manage-guides" element={
+          <ProtectedRoute>
+            <ManageGuides />
+          </ProtectedRoute>
+        } />
 
         {/* ================= GUIDE ================= */}
-        <Route path="/guide" element={<GuideDashboard />} />
+        <Route path="/guide" element={
+          <ProtectedRoute>
+            <GuideDashboard />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/guide/view-files" element={
+          <ProtectedRoute>
+            <ViewFiles />
+          </ProtectedRoute>
+        } />
 
         {/* ================= FALLBACK ================= */}
         <Route path="*" element={<Navigate to="/" />} />

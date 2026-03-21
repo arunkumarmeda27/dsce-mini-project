@@ -18,98 +18,59 @@ export default function ManageGroups() {
         setLoading(true);
 
         try {
-
             const groupData = await api.getBranchGroups();
             const guideData = await api.getGuides();
 
             setGroups(groupData || []);
             setGuides(guideData || []);
 
-        } catch {
-
-            alert("Failed to load data");
-
+        } catch (err) {
+            console.error(err);
+            alert("Failed to load group data");
         } finally {
-
             setLoading(false);
         }
     };
 
-    // =============================
-    // ASSIGN GUIDE
-    // =============================
     const assignGuide = async (groupId, guideId) => {
 
         if (!guideId) return;
 
         try {
-
-            const res = await api.assignGuide(groupId, guideId);
-
-            if (res.message) {
-
-                alert("Guide assigned successfully");
-                fetchData();
-
-            } else {
-
-                alert(res.detail || "Assignment failed");
-
-            }
-
+            await api.assignGuide(groupId, guideId);
+            alert("Guide assigned successfully");
+            fetchData();
         } catch {
-
-            alert("Server error");
-
+            alert("Assignment failed");
         }
     };
 
-    // =============================
-    // DELETE GROUP
-    // =============================
     const deleteGroup = async (groupId) => {
 
-        if (!window.confirm("Delete this group?")) return;
+        if (!window.confirm("Delete this group permanently?")) return;
 
         try {
-
-            const res = await api.deleteGroup(groupId);
-
-            if (res.message) {
-
-                alert("Group deleted");
-                fetchData();
-
-            }
-
+            await api.deleteGroup(groupId);
+            alert("Group deleted");
+            fetchData();
         } catch {
-
             alert("Delete failed");
-
         }
     };
 
-    // =============================
-    // SEND NOTIFICATION
-    // =============================
-    const sendNotification = async (groupId) => {
+    // 🔥 NEW: SEND NOTIFICATION
+    const sendNotification = async (groupId, target) => {
 
-        const message = prompt("Enter notification message");
+        const message = prompt(`Enter message for ${target}`);
 
         if (!message) return;
 
         try {
-
-            const res = await api.sendNotification(groupId, message);
-
-            if (res.message) {
-                alert("Notification sent");
-            }
-
-        } catch {
-
+            await api.sendNotification(groupId, target, message);
+            alert("Notification sent successfully");
+        } catch (err) {
+            console.error(err);
             alert("Failed to send notification");
-
         }
     };
 
@@ -128,126 +89,144 @@ export default function ManageGroups() {
                         Manage Project Groups
                     </h2>
 
-                    {loading && <p>Loading groups...</p>}
+                    {loading && <p>Loading...</p>}
 
                     {!loading && groups.length === 0 && (
                         <p>No groups available</p>
                     )}
 
-                    {!loading && groups.length > 0 && (
+                    <div style={{ display: "grid", gap: "15px" }}>
 
-                        <table style={{ width: "100%" }}>
+                        {groups.map(group => (
 
-                            <thead style={{ background: "#0B3D91", color: "white" }}>
+                            <div key={group.groupId}
+                                style={{
+                                    border: "1px solid #eee",
+                                    borderRadius: "12px",
+                                    padding: "16px",
+                                    background: "white",
+                                    boxShadow: "0 3px 12px rgba(0,0,0,0.05)"
+                                }}
+                            >
 
-                                <tr>
+                                {/* TOP */}
+                                <div style={{
+                                    display: "flex",
+                                    justifyContent: "space-between"
+                                }}>
+                                    <h3 style={{ color: "#0B3D91" }}>
+                                        {group.projectName}
+                                    </h3>
 
-                                    <th>Sl No</th>
-                                    <th>Group ID</th>
-                                    <th>Project Name</th>
-                                    <th>Domain</th>
-                                    <th>Guide</th>
-                                    <th>Members</th>
-                                    <th>Assign Guide</th>
-                                    <th>Actions</th>
+                                    <span style={{
+                                        fontSize: "12px",
+                                        background: "#E3F2FD",
+                                        padding: "5px 10px",
+                                        borderRadius: "8px"
+                                    }}>
+                                        {group.groupId}
+                                    </span>
+                                </div>
 
-                                </tr>
+                                <p><strong>Domain:</strong> {group.domain}</p>
 
-                            </thead>
+                                {/* STATUS BADGE */}
+                                <span style={{
+                                    display: "inline-block",
+                                    marginTop: "5px",
+                                    padding: "4px 10px",
+                                    borderRadius: "8px",
+                                    fontSize: "12px",
+                                    background:
+                                        group.status === "GUIDE_ACCEPTED"
+                                            ? "#E8F5E9"
+                                            : group.status === "GUIDE_ASSIGNED"
+                                                ? "#FFF3E0"
+                                                : "#ECEFF1"
+                                }}>
+                                    {group.status}
+                                </span>
 
-                            <tbody>
+                                {/* MEMBERS */}
+                                <div style={{ marginTop: "10px" }}>
+                                    <strong>Members:</strong>
 
-                                {groups.map((group, index) => (
+                                    {group.members.length === 0 ? (
+                                        <p style={{ color: "gray" }}>No members</p>
+                                    ) : (
+                                        group.members.map(m => (
+                                            <div key={m.uid}>
+                                                {m.name} ({m.usn || "N/A"})
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
 
-                                    <tr key={group.id}>
+                                {/* GUIDE */}
+                                <p style={{ marginTop: "10px" }}>
+                                    <strong>Guide:</strong>{" "}
+                                    {group.guideName || "Not Assigned"}
+                                </p>
 
-                                        <td>{index + 1}</td>
+                                {/* ASSIGN */}
+                                <select
+                                    className="input"
+                                    style={{ marginTop: "10px" }}
+                                    onChange={(e) =>
+                                        assignGuide(group.groupId, e.target.value)
+                                    }
+                                >
+                                    <option value="">Assign Guide</option>
 
-                                        <td>{group.id}</td>
+                                    {guides.map(g => (
+                                        <option key={g.uid} value={g.uid}>
+                                            {g.name}
+                                        </option>
+                                    ))}
+                                </select>
 
-                                        <td>{group.projectName}</td>
+                                {/* ACTIONS */}
+                                <div style={{
+                                    marginTop: "12px",
+                                    display: "flex",
+                                    gap: "10px",
+                                    flexWrap: "wrap"
+                                }}>
 
-                                        <td>{group.domain}</td>
+                                    <button
+                                        className="btn-accent"
+                                        onClick={() => deleteGroup(group.groupId)}
+                                    >
+                                        Delete
+                                    </button>
 
-                                        <td>
-                                            {group.guideName || "Not Assigned"}
-                                        </td>
+                                    <button
+                                        className="btn-primary"
+                                        onClick={() => sendNotification(group.groupId, "students")}
+                                    >
+                                        Notify Students
+                                    </button>
 
-                                        <td>
+                                    <button
+                                        className="btn-primary"
+                                        onClick={() => sendNotification(group.groupId, "guide")}
+                                    >
+                                        Notify Guide
+                                    </button>
 
-                                            {group.members.map((m, i) => (
-                                                <div key={i}>
-                                                    {m.name} ({m.usn})
-                                                </div>
-                                            ))}
+                                </div>
 
-                                        </td>
+                            </div>
 
-                                        {/* GUIDE DROPDOWN */}
+                        ))}
 
-                                        <td>
-
-                                            <select
-                                                onChange={(e) =>
-                                                    assignGuide(group.id, e.target.value)
-                                                }
-                                            >
-
-                                                <option value="">
-                                                    Select Guide
-                                                </option>
-
-                                                {guides.map(g => (
-
-                                                    <option
-                                                        key={g.uid}
-                                                        value={g.uid}
-                                                    >
-                                                        {g.name}
-                                                    </option>
-
-                                                ))}
-
-                                            </select>
-
-                                        </td>
-
-                                        <td>
-
-                                            <button
-                                                className="btn-accent"
-                                                onClick={() => deleteGroup(group.id)}
-                                            >
-                                                Delete
-                                            </button>
-
-                                            <button
-                                                className="btn-primary"
-                                                style={{ marginLeft: "10px" }}
-                                                onClick={() =>
-                                                    sendNotification(group.id)
-                                                }
-                                            >
-                                                Notify
-                                            </button>
-
-                                        </td>
-
-                                    </tr>
-
-                                ))}
-
-                            </tbody>
-
-                        </table>
-
-                    )}
+                    </div>
 
                 </div>
 
             </div>
 
         </div>
-
     );
+
 }
