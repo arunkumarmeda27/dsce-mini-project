@@ -19,7 +19,7 @@ export default function Login() {
     const [googleLoading, setGoogleLoading] = useState(false);
     const [message, setMessage] = useState("");
 
-    const BASE_URL = "http://127.0.0.1:8000";
+    const BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
     // =========================
     // HANDLE USER FLOW

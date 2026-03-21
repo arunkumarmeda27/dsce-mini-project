@@ -3,7 +3,7 @@ import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
 import Preloader from "../../components/Preloader";
 
-const BASE_URL = "http://127.0.0.1:8000";
+const BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 export default function UploadProject() {
