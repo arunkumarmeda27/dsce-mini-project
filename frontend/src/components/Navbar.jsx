@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import ThemeToggle from "./ThemeToggle";
 import BackButton from "./BackButton";
+import logo from "../assets/dsce-logo.png";
 
 export default function Navbar() {
 
@@ -13,7 +14,7 @@ export default function Navbar() {
             <div className="flex items-center gap-3">
 
                 <img
-                    src="/src/assets/dsce-logo.png"
+                    src={logo}
                     className="h-10"
                 />
 

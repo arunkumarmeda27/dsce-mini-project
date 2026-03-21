@@ -8,6 +8,7 @@ import {
     signOut
 } from "firebase/auth";
 import { auth } from "../firebase/config";
+import logo from "../assets/dsce-logo.png";
 
 export default function Login() {
 
@@ -195,7 +196,7 @@ export default function Login() {
                 textAlign: "center"
             }}>
 
-                <img src="/src/assets/dsce-logo.png" height="55" />
+                <img src={logo} height="55" />
 
                 <h2 style={{ marginTop: "10px", color: "#1565C0" }}>
                     DSCE Portal
