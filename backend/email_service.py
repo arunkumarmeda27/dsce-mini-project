@@ -1,8 +1,12 @@
 import urllib.request
 import json
 import ssl
+import os
+from dotenv import load_dotenv
 
-BREVO_API_KEY = "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"
+load_dotenv()
+
+BREVO_API_KEY = os.environ.get("BREVO_API_KEY")
 SENDER_EMAIL = "medaarun390@gmail.com"
 SENDER_NAME = "DSCE Project Portal"
 
