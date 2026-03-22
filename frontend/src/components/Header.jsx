@@ -9,8 +9,7 @@ import {
     collection,
     query,
     where,
-    onSnapshot,
-    orderBy
+    onSnapshot
 } from "firebase/firestore";
 
 export default function Header() {
@@ -29,15 +28,41 @@ export default function Header() {
     }, []);
 
     const startNotifications = (uid) => {
-        const q = query(
+        // Query 1: notifications stored with userId field (from send-notification routes)
+        const q1 = query(
             collection(db, "notifications"),
-            where("userId", "==", uid),
-            orderBy("createdAt", "desc")
+            where("userId", "==", uid)
         );
-        onSnapshot(q, (snapshot) => {
-            const list = [];
-            snapshot.forEach(doc => list.push({ id: doc.id, ...doc.data() }));
-            setNotifications(list);
+        // Query 2: notifications stored with users array (from create_notification helper)
+        const q2 = query(
+            collection(db, "notifications"),
+            where("users", "array-contains", uid)
+        );
+        const seen = new Set();
+        const merge = (snapshot) => {
+            snapshot.forEach(doc => {
+                if (!seen.has(doc.id)) {
+                    seen.add(doc.id);
+                }
+            });
+        };
+        let list1 = [];
+        let list2 = [];
+        const update = () => {
+            const merged = [];
+            const ids = new Set();
+            [...list1, ...list2].forEach(n => {
+                if (!ids.has(n.id)) { ids.add(n.id); merged.push(n); }
+            });
+            setNotifications(merged);
+        };
+        onSnapshot(q1, (snapshot) => {
+            list1 = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            update();
+        });
+        onSnapshot(q2, (snapshot) => {
+            list2 = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            update();
         });
     };
 
