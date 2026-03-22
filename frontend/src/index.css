@@ -31,7 +31,6 @@ body {
     justify-content: space-between;
     padding: 0 20px;
     gap: 10px;
-    overflow: hidden; /* CRITICAL: prevent children from pushing header height */
 }
 
 /* ============================= */

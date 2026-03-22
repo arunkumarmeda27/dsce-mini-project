@@ -315,6 +315,20 @@ def delete_user(uid: str, admin=Depends(verify_user)):
     if admin["role"] != "admin":
         raise HTTPException(403, "Admins only")
 
+    user_doc = db.collection("users").document(uid).get()
+    if user_doc.exists:
+        data = user_doc.to_dict()
+        email = data.get("email") or data.get("googleEmail")
+        if email:
+            try:
+                send_email(
+                    email,
+                    "Account Removed - DSCE Project Portal",
+                    f"Hello {data.get('name', 'Student')},<br><br>Your account on the DSCE Mini Project Portal has been removed by the administrator. If you believe this is an error, please contact your branch coordinator.<br><br>Best Regards,<br>Admin Team"
+                )
+            except Exception as e:
+                print("Failed to send removal email:", e)
+
     db.collection("users").document(uid).delete()
     firebase_auth.delete_user(uid)
 
