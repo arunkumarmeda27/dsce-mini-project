@@ -20,11 +20,11 @@
 
   <!-- Badges -->
   <p align="center">
-    <a href="https://github.com/arunkumarmeda27/dsce-mini-project/graphs/contributors"><img src="https://img.shields.io/github/contributors/arunkumarmeda27/dsce-mini-project.svg?style=for-the-badge" alt="Contributors"></a>
-    <a href="https://github.com/arunkumarmeda27/dsce-mini-project/network/members"><img src="https://img.shields.io/github/forks/arunkumarmeda27/dsce-mini-project.svg?style=for-the-badge" alt="Forks"></a>
-    <a href="https://github.com/arunkumarmeda27/dsce-mini-project/stargazers"><img src="https://img.shields.io/github/stars/arunkumarmeda27/dsce-mini-project.svg?style=for-the-badge" alt="Stargazers"></a>
-    <a href="https://github.com/arunkumarmeda27/dsce-mini-project/issues"><img src="https://img.shields.io/github/issues/arunkumarmeda27/dsce-mini-project.svg?style=for-the-badge" alt="Issues"></a>
-    <a href="https://github.com/arunkumarmeda27/dsce-mini-project/blob/master/LICENSE.txt"><img src="https://img.shields.io/github/license/arunkumarmeda27/dsce-mini-project.svg?style=for-the-badge" alt="License"></a>
+    <a href="https://github.com/arunkumarmeda27/dsce-mini-project/graphs/contributors"><img src="https://img.shields.io/github/contributors/arunkumarmeda27/dsce-mini-project.svg?style=for-the-badge&v=1" alt="Contributors"></a>
+    <a href="https://github.com/arunkumarmeda27/dsce-mini-project/network/members"><img src="https://img.shields.io/github/forks/arunkumarmeda27/dsce-mini-project.svg?style=for-the-badge&v=1" alt="Forks"></a>
+    <a href="https://github.com/arunkumarmeda27/dsce-mini-project/stargazers"><img src="https://img.shields.io/github/stars/arunkumarmeda27/dsce-mini-project.svg?style=for-the-badge&v=1" alt="Stargazers"></a>
+    <a href="https://github.com/arunkumarmeda27/dsce-mini-project/issues"><img src="https://img.shields.io/github/issues/arunkumarmeda27/dsce-mini-project.svg?style=for-the-badge&v=1" alt="Issues"></a>
+    <a href="https://github.com/arunkumarmeda27/dsce-mini-project/blob/main/LICENSE"><img src="https://img.shields.io/github/license/arunkumarmeda27/dsce-mini-project.svg?style=for-the-badge&v=1" alt="License"></a>
   </p>
 </div>
 
