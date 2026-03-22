@@ -18,146 +18,83 @@ export default function Header() {
     const nav = useNavigate();
 
     const [userName, setUserName] = useState("User");
-    const [uid, setUid] = useState(null);
-
     const [notifications, setNotifications] = useState([]);
     const [open, setOpen] = useState(false);
 
-    // =========================
-    // GET USER INFO
-    // =========================
     useEffect(() => {
-
         const name = localStorage.getItem("name");
         const id = localStorage.getItem("uid");
-
         if (name) setUserName(name);
-        if (id) {
-            setUid(id);
-            startNotifications(id);
-        }
-
+        if (id) startNotifications(id);
     }, []);
 
-    // =========================
-    // REALTIME NOTIFICATIONS
-    // =========================
     const startNotifications = (uid) => {
-
         const q = query(
             collection(db, "notifications"),
             where("userId", "==", uid),
             orderBy("createdAt", "desc")
         );
-
         onSnapshot(q, (snapshot) => {
-
             const list = [];
-
-            snapshot.forEach(doc => {
-                list.push({ id: doc.id, ...doc.data() });
-            });
-
+            snapshot.forEach(doc => list.push({ id: doc.id, ...doc.data() }));
             setNotifications(list);
-
         });
     };
 
-    // =========================
-    // LOGOUT
-    // =========================
     const logout = async () => {
-
         try {
             await signOut(auth);
             localStorage.clear();
+            document.body.classList.remove("sidebar-open");
             window.location.href = "/";
         } catch {
             alert("Logout failed");
         }
     };
 
-    return (
+    const toggleSidebar = () => {
+        document.body.classList.toggle("sidebar-open");
+    };
 
-        <div style={{
-            position: "sticky",
-            top: 0,
-            zIndex: 1000,
-            height: "70px",
-            background: "#fff",
-            borderBottom: "1px solid #eee",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "0 30px",
-            boxShadow: "0 4px 15px rgba(0,0,0,0.05)"
-        }}>
+    return (
+        <div className="app-header">
 
             {/* LEFT */}
-            <div style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "12px"
-            }}>
-                <img src={logo} alt="logo" style={{ height: "42px" }} />
-
-                <div>
-                    <div style={{
-                        fontWeight: "600",
-                        fontSize: "15px",
-                        color: "#1565C0"
-                    }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
+                <button className="mobile-toggle" onClick={toggleSidebar}>
+                    ☰
+                </button>
+                <img src={logo} alt="logo" style={{ height: "40px", flexShrink: 0 }} />
+                <div className="header-title">
+                    <div style={{ fontWeight: "600", fontSize: "14px", color: "#1565C0", whiteSpace: "nowrap" }}>
                         DSCE Project Portal
                     </div>
-
-                    <div style={{
-                        fontSize: "11px",
-                        color: "#777"
-                    }}>
+                    <div style={{ fontSize: "11px", color: "#777", whiteSpace: "nowrap" }}>
                         Mini Project Management
                     </div>
                 </div>
             </div>
 
-
             {/* RIGHT */}
-            <div style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "20px"
-            }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", flexShrink: 0 }}>
 
-                {/* 🔔 NOTIFICATION */}
+                {/* NOTIFICATION BELL */}
                 <div style={{ position: "relative" }}>
-
                     <div
                         onClick={() => setOpen(!open)}
-                        style={{
-                            cursor: "pointer",
-                            fontSize: "20px",
-                            padding: "6px 10px",
-                            borderRadius: "8px",
-                            transition: "0.2s"
-                        }}
-                        onMouseEnter={(e) =>
-                            e.currentTarget.style.background = "#F5F7FA"
-                        }
-                        onMouseLeave={(e) =>
-                            e.currentTarget.style.background = "transparent"
-                        }
+                        style={{ cursor: "pointer", fontSize: "20px", padding: "6px 8px", borderRadius: "8px", position: "relative" }}
                     >
                         🔔
-
                         {notifications.length > 0 && (
                             <span style={{
                                 position: "absolute",
-                                top: "0px",
-                                right: "0px",
+                                top: "0px", right: "0px",
                                 background: "#D32F2F",
                                 color: "white",
                                 fontSize: "10px",
-                                padding: "2px 6px",
-                                borderRadius: "50%"
+                                padding: "2px 5px",
+                                borderRadius: "50%",
+                                lineHeight: 1
                             }}>
                                 {notifications.length}
                             </span>
@@ -169,79 +106,45 @@ export default function Header() {
                         <div style={{
                             position: "absolute",
                             right: 0,
-                            top: "40px",
-                            width: "320px",
+                            top: "45px",
+                            width: "300px",
+                            maxWidth: "90vw",
                             maxHeight: "400px",
                             overflowY: "auto",
                             background: "white",
                             borderRadius: "10px",
                             boxShadow: "0 6px 25px rgba(0,0,0,0.2)",
-                            padding: "10px"
+                            padding: "12px",
+                            zIndex: 10000
                         }}>
-
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
-                                <h4 style={{ margin: 0 }}>
-                                    Notifications
-                                </h4>
-
+                                <h4 style={{ margin: 0 }}>Notifications</h4>
                                 {notifications.length > 0 && (
                                     <button
                                         onClick={async () => {
-                                            try {
-                                                await api.clearNotifications();
-                                            } catch (e) {
-                                                console.error("Failed to clear notifications:", e);
-                                            }
+                                            try { await api.clearNotifications(); } catch (e) { console.error(e); }
                                         }}
-                                        style={{
-                                            background: "transparent",
-                                            border: "none",
-                                            color: "#1565C0",
-                                            cursor: "pointer",
-                                            fontSize: "12px",
-                                            textDecoration: "underline"
-                                        }}
+                                        style={{ background: "transparent", border: "none", color: "#1565C0", cursor: "pointer", fontSize: "12px", textDecoration: "underline" }}
                                     >
                                         Clear All
                                     </button>
                                 )}
                             </div>
-
-                            {notifications.length === 0 && (
-                                <p style={{ color: "gray" }}>
-                                    No notifications
-                                </p>
-                            )}
-
+                            {notifications.length === 0 && <p style={{ color: "gray" }}>No notifications</p>}
                             {notifications.map(n => (
-                                <div key={n.id} style={{
-                                    padding: "10px",
-                                    marginBottom: "8px",
-                                    borderRadius: "8px",
-                                    background: "#F5F9FF",
-                                    borderLeft: "4px solid #1565C0"
-                                }}>
+                                <div key={n.id} style={{ padding: "10px", marginBottom: "8px", borderRadius: "8px", background: "#F5F9FF", borderLeft: "4px solid #1565C0" }}>
                                     <strong>{n.title || "Notification"}</strong>
-                                    <p style={{ margin: "4px 0" }}>
-                                        {n.message}
-                                    </p>
+                                    <p style={{ margin: "4px 0", fontSize: "13px" }}>{n.message}</p>
                                 </div>
                             ))}
-
                         </div>
                     )}
-
                 </div>
 
-
-                {/* USER NAME */}
-                <div style={{
-                    fontWeight: "500",
-                    color: "#333"
-                }}>
+                {/* USER NAME - hidden on very small screens */}
+                <div className="header-username" style={{ fontWeight: "500", color: "#333", whiteSpace: "nowrap" }}>
                     {userName}
                 </div>
-
 
                 {/* LOGOUT */}
                 <button
@@ -252,22 +155,13 @@ export default function Header() {
                         borderRadius: "8px",
                         cursor: "pointer",
                         background: "transparent",
-                        transition: "0.2s"
-                    }}
-                    onMouseEnter={(e) => {
-                        e.target.style.background = "#1565C0";
-                        e.target.style.color = "white";
-                    }}
-                    onMouseLeave={(e) => {
-                        e.target.style.background = "transparent";
-                        e.target.style.color = "black";
+                        whiteSpace: "nowrap",
+                        fontSize: "13px"
                     }}
                 >
                     Logout
                 </button>
-
             </div>
-
         </div>
     );
 }

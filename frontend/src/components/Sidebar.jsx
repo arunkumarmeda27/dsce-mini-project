@@ -7,7 +7,11 @@ export default function Sidebar({ role }) {
 
     const isActive = (path) => location.pathname === path;
 
-    const go = (path) => navigate(path);
+    const go = (path) => {
+        navigate(path);
+        // Close sidebar on mobile after navigating
+        document.body.classList.remove("sidebar-open");
+    };
 
     const Item = ({ icon, label, path }) => {
 
@@ -45,24 +49,16 @@ export default function Sidebar({ role }) {
     };
 
     return (
-
-        <div style={{
-            width: "230px",
-            height: "100vh",
-            background: "linear-gradient(180deg,#ffffff,#F5F9FF)",
-            borderRight: "1px solid #eee",
-            padding: "20px 15px",
-            position: "fixed",
-            left: 0,
-            top: 0
-        }}>
+        <div className="sidebar">
 
             {/* TITLE */}
             <div style={{
-                fontSize: "18px",
+                fontSize: "16px",
                 fontWeight: "bold",
                 color: "#1565C0",
-                marginBottom: "25px"
+                marginBottom: "25px",
+                paddingBottom: "15px",
+                borderBottom: "1px solid #eee"
             }}>
                 🚀 Project Portal
             </div>
@@ -74,7 +70,6 @@ export default function Sidebar({ role }) {
             {role === "student" && (
                 <>
                     <Section title="Student Panel" />
-
                     <Item icon="👥" label="Create Group" path="/create-group" />
                     <Item icon="📄" label="Group Status" path="/group-status" />
                     <Item icon="⬆" label="Upload Project" path="/upload" />
@@ -85,7 +80,6 @@ export default function Sidebar({ role }) {
             {role === "admin" && (
                 <>
                     <Section title="Admin Controls" />
-
                     <Item icon="✅" label="Approve Users" path="/approvals" />
                     <Item icon="🎓" label="Manage Students" path="/manage-students" />
                     <Item icon="🧑‍🏫" label="Manage Guides" path="/manage-guides" />
@@ -97,13 +91,11 @@ export default function Sidebar({ role }) {
             {role === "guide" && (
                 <>
                     <Section title="Guide Panel" />
-
                     <Item icon="📚" label="My Projects" path="/guide" />
                 </>
             )}
 
         </div>
-
     );
 }
 

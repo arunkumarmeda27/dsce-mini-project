@@ -114,7 +114,8 @@ export default function Signup() {
         }}>
 
             <div style={{
-                width: "430px",
+                width: "100%",
+                maxWidth: "430px",
                 maxHeight: "92vh",
                 overflowY: "auto",
                 background: "#fff",

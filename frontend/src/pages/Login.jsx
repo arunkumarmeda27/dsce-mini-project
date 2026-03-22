@@ -188,7 +188,8 @@ export default function Login() {
         }}>
 
             <div style={{
-                width: "380px",
+                width: "100%",
+                maxWidth: "380px",
                 padding: "30px",
                 borderRadius: "12px",
                 border: "1px solid #eee",
