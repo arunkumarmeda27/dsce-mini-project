@@ -34,7 +34,13 @@ const ProtectedRoute = ({ children }) => {
 
 /* ================= PUBLIC ROUTE ================= */
 const PublicRoute = ({ children }) => {
-  return isLoggedIn() ? <Navigate to="/student" /> : children;
+  if (isLoggedIn()) {
+    const role = localStorage.getItem("role");
+    if (role === "admin") return <Navigate to="/admin" />;
+    if (role === "guide") return <Navigate to="/guide" />;
+    return <Navigate to="/student" />;
+  }
+  return children;
 };
 
 export default function App() {

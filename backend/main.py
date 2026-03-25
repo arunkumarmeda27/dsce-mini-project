@@ -5,6 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 import traceback
 import os
+import asyncio
 
 # ROUTES
 from auth_routes import router as auth_router
@@ -61,8 +62,9 @@ async def startup_event():
     print("\n🚀 Starting DSCE Backend...\n")
 
     try:
-        create_branch_admins()
-        print("✔ Branch admins initialized")
+        loop = asyncio.get_running_loop()
+        loop.run_in_executor(None, create_branch_admins)
+        print("✔ Branch admins initialization started in background")
     except Exception as e:
         print("⚠ Initialization warning:", e)
 

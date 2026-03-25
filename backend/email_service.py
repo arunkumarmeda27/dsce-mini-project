@@ -2,6 +2,7 @@ import urllib.request
 import json
 import ssl
 import os
+import threading
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -10,7 +11,7 @@ BREVO_API_KEY = os.environ.get("BREVO_API_KEY")
 SENDER_EMAIL = "medaarun390@gmail.com"
 SENDER_NAME = "DSCE Project Portal"
 
-def send_email(to, subject, body):
+def send_email_sync(to, subject, body):
     url = "https://api.brevo.com/v3/smtp/email"
 
     headers = {
@@ -47,3 +48,6 @@ def send_email(to, subject, body):
             print(f"❌ Brevo failed for {to}: {error_body}")
         else:
             print(f"❌ Brevo failed for {to}: {e}")
+
+def send_email(to, subject, body):
+    threading.Thread(target=send_email_sync, args=(to, subject, body)).start()

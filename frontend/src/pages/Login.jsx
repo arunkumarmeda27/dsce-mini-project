@@ -69,6 +69,7 @@ export default function Login() {
         // ✅ SUCCESS LOGIN
         localStorage.setItem("name", data.name);
         localStorage.setItem("uid", data.uid);
+        localStorage.setItem("role", data.role);
 
         if (data.role === "admin") navigate("/admin");
         else if (data.role === "guide") navigate("/guide");
