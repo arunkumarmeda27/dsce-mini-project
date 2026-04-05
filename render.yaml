@@ -9,3 +9,5 @@ services:
         value: 3.10.0
       - key: MAIN_DIR
         value: backend
+      - key: BREVO_API_KEY
+        sync: false

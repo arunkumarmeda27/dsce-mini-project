@@ -7,11 +7,20 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-BREVO_API_KEY = os.environ.get("BREVO_API_KEY")
+BREVO_API_KEY = os.environ.get("BREVO_API_KEY", "").strip()
 SENDER_EMAIL = "medaarun390@gmail.com"
 SENDER_NAME = "DSCE Project Portal"
 
+
 def send_email_sync(to, subject, body):
+
+    # ============================================
+    # GUARD: don't attempt if API key is missing
+    # ============================================
+    if not BREVO_API_KEY:
+        print(f"⚠️  BREVO_API_KEY not set — skipping email to {to}")
+        return
+
     url = "https://api.brevo.com/v3/smtp/email"
 
     headers = {
@@ -34,20 +43,30 @@ def send_email_sync(to, subject, body):
         method="POST"
     )
 
+    # Allow self-signed but still validate Brevo's cert properly
     ctx = ssl.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode = ssl.CERT_NONE
 
     try:
-        with urllib.request.urlopen(req, context=ctx) as response:
+        with urllib.request.urlopen(req, context=ctx, timeout=15) as response:
             res_body = response.read().decode("utf-8")
-            print(f"✅ Brevo email sent to {to}: {res_body}")
+            print(f"✅ Email sent to {to} | subject: '{subject}' | response: {res_body[:80]}")
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode("utf-8") if hasattr(e, "read") else str(e)
+        print(f"❌ Brevo HTTP error for {to}: {e.code} — {error_body}")
     except urllib.error.URLError as e:
-        if hasattr(e, "read"):
-            error_body = e.read().decode("utf-8")
-            print(f"❌ Brevo failed for {to}: {error_body}")
-        else:
-            print(f"❌ Brevo failed for {to}: {e}")
+        print(f"❌ Brevo URL error for {to}: {e.reason}")
+    except Exception as e:
+        print(f"❌ Unexpected email error for {to}: {e}")
 
-def send_email(to, subject, body):
-    threading.Thread(target=send_email_sync, args=(to, subject, body)).start()
+
+def send_email(to: str, subject: str, body: str):
+    """
+    Fire-and-forget email via background thread.
+    Safe for FastAPI + Gunicorn/uvicorn workers.
+    """
+    if not to or "@" not in to:
+        print(f"⚠️  Invalid recipient email: '{to}' — skipping")
+        return
+
+    t = threading.Thread(target=send_email_sync, args=(to, subject, body), daemon=True)
+    t.start()

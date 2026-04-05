@@ -380,12 +380,23 @@ def complete_profile(data: dict, token_data=Depends(verify_token)):
 
 @router.get("/test-email")
 def test_email():
+    import os
+    api_key = os.environ.get("BREVO_API_KEY", "")
+    if not api_key:
+        return {
+            "status": "ERROR",
+            "reason": "BREVO_API_KEY is NOT set on this server. Add it in the Render dashboard under Environment Variables."
+        }
     try:
         send_email(
-            "hacktechyt33@gmail.com",   # put your email here
-            "Test Email",
-            "This is a test email from DSCE system"
+            "medaarun390@gmail.com",
+            "DSCE Email System Test",
+            "<h2>Email working!</h2><p>Test from DSCE Portal backend on Render.</p>"
         )
-        return {"message": "Email sent"}
+        return {
+            "status": "TRIGGERED",
+            "message": "Email queued. Check medaarun390@gmail.com inbox (and spam).",
+            "api_key_configured": True
+        }
     except Exception as e:
-        return {"error": str(e)}
+        return {"status": "ERROR", "error": str(e)}
