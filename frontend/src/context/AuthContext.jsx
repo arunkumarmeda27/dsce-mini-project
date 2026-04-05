@@ -82,8 +82,28 @@ export function AuthProvider({ children }) {
         localStorage.removeItem("uid");
     };
 
+    const refreshAuth = async () => {
+        if (!auth.currentUser) return;
+        try {
+            const userRef = doc(db, "users", auth.currentUser.uid);
+            const userSnap = await getDoc(userRef);
+            if (userSnap.exists()) {
+                const userData = userSnap.data();
+                setUser({
+                    ...auth.currentUser,
+                    role: userData.role,
+                    dbName: userData.name,
+                    approved: userData.approved,
+                    branch: userData.branch
+                });
+            }
+        } catch (error) {
+            console.error("Refresh Auth error:", error);
+        }
+    };
+
     return (
-        <AuthContext.Provider value={{ user, authLoading }}>
+        <AuthContext.Provider value={{ user, authLoading, refreshAuth }}>
             {children}
         </AuthContext.Provider>
     );

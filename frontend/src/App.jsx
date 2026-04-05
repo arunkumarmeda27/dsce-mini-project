@@ -70,16 +70,73 @@ function AuthSplash() {
 }
 
 // ==============================================
-// PROTECTED ROUTE — uses real Firebase auth
+// PROTECTED ROUTE — handles auth + approval
 // ==============================================
 function ProtectedRoute({ children }) {
-    const { user, authLoading } = useAuth();
+    const { user, authLoading, refreshAuth } = useAuth();
 
-    // Wait for Firebase to resolve before deciding
     if (authLoading) return <AuthSplash />;
 
-    // Not logged in → send to login
+    // Not logged in -> Login
     if (!user) return <Navigate to="/" replace />;
+
+    // Logged in but not approved -> Approval Splash
+    if (user.role !== "admin" && !user.approved) {
+        return (
+            <div style={{
+                height: "100vh",
+                background: "#f8faff",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                textAlign: "center",
+                padding: "20px"
+            }}>
+                <div style={{
+                    fontSize: "60px",
+                    marginBottom: "20px"
+                }}>⏳</div>
+                <h2 style={{ color: "#1565C0", margin: "0 0 10px 0" }}>Pending Admin Approval</h2>
+                <p style={{ color: "#666", maxWidth: "400px", lineHeight: "1.6", marginBottom: "25px" }}>
+                    Your account has been created successfully. For security reasons, a college admin must verify your profile before you can access the dashboard.
+                </p>
+                <div style={{ display: "flex", gap: "12px" }}>
+                    <button 
+                        onClick={() => refreshAuth()}
+                        style={{
+                            padding: "12px 24px",
+                            background: "#1565C0",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "8px",
+                            fontWeight: "600",
+                            cursor: "pointer"
+                        }}
+                    >
+                        🔄 Check Status
+                    </button>
+                    <button 
+                        onClick={() => auth.signOut()}
+                        style={{
+                            padding: "12px 24px",
+                            background: "white",
+                            color: "#1565C0",
+                            border: "1px solid #1565C0",
+                            borderRadius: "8px",
+                            fontWeight: "600",
+                            cursor: "pointer"
+                        }}
+                    >
+                        Logout
+                    </button>
+                </div>
+                <p style={{ marginTop: "30px", fontSize: "12px", color: "#999" }}>
+                    Average approval time: 24-48 hours.
+                </p>
+            </div>
+        );
+    }
 
     return children;
 }
