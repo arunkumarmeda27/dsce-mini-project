@@ -12,6 +12,21 @@ export function AuthProvider({ children }) {
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
             if (firebaseUser) {
+
+                // 🚫 STRICT DOMAIN CHECK
+                const email = firebaseUser.email || "";
+                if (!email.endsWith("@dsce.edu.in")) {
+                    console.warn("🚫 Non-college email detected. Signing out...");
+                    await auth.signOut();
+                    localStorage.removeItem("token");
+                    localStorage.removeItem("role");
+                    localStorage.removeItem("name");
+                    localStorage.removeItem("uid");
+                    setUser(false);
+                    setAuthLoading(false);
+                    return;
+                }
+
                 try {
                     // Always get a fresh token and store it
                     const freshToken = await firebaseUser.getIdToken(true);
