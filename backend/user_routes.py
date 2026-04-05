@@ -180,6 +180,19 @@ def google_register(token_data=Depends(verify_token)):
         "approved": False
     })
 
+    # Welcome email for new Google sign-in users
+    try:
+        send_email(
+            email,
+            "Welcome to DSCE Mini Project Portal!",
+            f"Hello {name},<br><br>Welcome to the DSCE Mini Project portal! "
+            f"Your account has been created and is <b>pending admin approval</b>.<br><br>"
+            f"You will receive another email once your account is fully activated.<br><br>"
+            f"Best Regards,<br>DSCE Mini Project Portal"
+        )
+    except Exception as e:
+        print("Welcome email error:", e)
+
     return {"message": "Google user created"}
 
 

@@ -461,14 +461,21 @@ def review_submission(submission_id: str, data: dict, user=Depends(verify_user))
     
     submission_data = doc.to_dict()
     group_id = submission_data.get("groupId")
+    decision = data.get("decision", "REVIEWED")
+    comment = data.get("comment", "")
+
     if group_id:
         group_doc = db.collection("groups").document(group_id).get()
         if group_doc.exists:
+            group_data = group_doc.to_dict()
+            member_ids = group_data.get("members", [])
+
+            # Notify + email all members
             create_notification(
-                group_doc.to_dict().get("members", []),
+                member_ids,
                 "📊 Project Review Update",
-                f"Your submission for group {group_id} has been marked as {data.get('decision')} by your guide.",
-                []
+                f"Your submission for group <b>{group_id}</b> has been marked as <b>{decision}</b> by your guide."
+                + (f"<br><br><b>Guide Comment:</b> {comment}" if comment else ""),
             )
 
     return {"message": "Review updated"}
@@ -542,12 +549,24 @@ def upload_project(
 
     group_doc = db.collection("groups").document(group_id).get()
     if group_doc.exists:
+        group_data = group_doc.to_dict()
+        member_ids = group_data.get("members", [])
+        guide_id_assigned = group_data.get("guideId")
+
+        # Notify + email all members
         create_notification(
-            group_doc.to_dict().get("members", []),
+            member_ids,
             "📤 Project Submitted",
-            f"Your group '{group_id}' has successfully submitted the project files.",
-            []
+            f"Your group <b>{group_id}</b> has successfully submitted the project files. Your guide will review it soon.",
         )
+
+        # Also email the guide if assigned
+        if guide_id_assigned:
+            create_notification(
+                [guide_id_assigned],
+                "📥 New Project Submission",
+                f"Group <b>{group_id}</b> has submitted their project files. Please log in to review.",
+            )
 
     return {"message": "Project uploaded"}
 # ===============================
@@ -622,14 +641,15 @@ def guide_decision(group_id: str, decision: str, user=Depends(verify_user)):
     # ===============================
     if decision == "ACCEPT":
         group_ref.update({
-            "guideId": user["uid"],   # ✅ FIX
+            "guideId": user["uid"],
             "status": "GUIDE_ACCEPTED"
         })
+
+        # Notify + email all members
         create_notification(
             data.get("members", []),
-            "📢 Guide Accepted",
-            f"Your guide has accepted your group ({group_id})",
-            []
+            "✅ Guide Accepted Your Group",
+            f"Your guide <b>{user.get('name', 'Guide')}</b> has <b>accepted</b> your group (<b>{group_id}</b>). You can now proceed with your mini project!",
         )
         return {"message": "Group accepted"}
 
@@ -641,11 +661,12 @@ def guide_decision(group_id: str, decision: str, user=Depends(verify_user)):
             "guideId": None,
             "status": "CREATED"
         })
+
+        # Notify + email all members
         create_notification(
             data.get("members", []),
-            "📢 Guide Rejected",
-            f"Your guide has rejected your group ({group_id})",
-            []
+            "❌ Guide Rejected Your Group",
+            f"Your guide has <b>rejected</b> your group (<b>{group_id}</b>). The admin will reassign a new guide soon.",
         )
         return {"message": "Group rejected"}
 
