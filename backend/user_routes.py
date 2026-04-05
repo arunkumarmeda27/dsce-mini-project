@@ -18,23 +18,7 @@ from email_service import send_email
 
 router = APIRouter()
 
-# ===============================
-# 🔥 UNIVERSAL NOTIFICATION SYSTEM
-# ===============================
-def create_notification(user_ids, title, message, emails):
-
-    db.collection("notifications").add({
-        "users": user_ids,
-        "title": title,
-        "message": message,
-        "createdAt": datetime.utcnow()
-    })
-
-    for email in emails:
-        try:
-            send_email(email, title, message)
-        except Exception as e:
-            print("Email failed:", e)
+from notification_service import create_notification
 
 # ===============================
 # MODELS
@@ -137,14 +121,12 @@ def register(user: RegisterUser):
         "approved": False
     })
 
-    try:
-        send_email(
-            user.email,
-            "Welcome to DSCE Mini Project!",
-            f"Hello {user.name},<br><br>Welcome to the DSCE Mini Project portal! Your profile has been successfully created and is currently pending admin approval.<br><br>You will receive another notification once your account is fully activated."
-        )
-    except Exception as e:
-        print("Email error:", e)
+    # Welcome email
+    create_notification(
+        [firebase_user.uid],
+        "Welcome to DSCE Mini Project!",
+        f"Hello {user.name},<br><br>Welcome to the DSCE Mini Project portal! Your profile has been successfully created and is currently pending admin approval.<br><br>You will receive another notification once your account is fully activated."
+    )
 
     return {"message": "Registered. Await approval."}
 
@@ -181,17 +163,14 @@ def google_register(token_data=Depends(verify_token)):
     })
 
     # Welcome email for new Google sign-in users
-    try:
-        send_email(
-            email,
-            "Welcome to DSCE Mini Project Portal!",
-            f"Hello {name},<br><br>Welcome to the DSCE Mini Project portal! "
-            f"Your account has been created and is <b>pending admin approval</b>.<br><br>"
-            f"You will receive another email once your account is fully activated.<br><br>"
-            f"Best Regards,<br>DSCE Mini Project Portal"
-        )
-    except Exception as e:
-        print("Welcome email error:", e)
+    create_notification(
+        [uid],
+        "Welcome to DSCE Mini Project Portal!",
+        f"Hello {name},<br><br>Welcome to the DSCE Mini Project portal! "
+        f"Your account has been created and is <b>pending admin approval</b>.<br><br>"
+        f"You will receive another email once your account is fully activated.<br><br>"
+        f"Best Regards,<br>DSCE Mini Project Portal"
+    )
 
     return {"message": "Google user created"}
 
@@ -242,14 +221,12 @@ def approve_user(uid: str, admin=Depends(verify_user)):
 
     data = user_doc.to_dict()
 
-    try:
-        send_email(
-            data.get("email"),
-            "Welcome to DSCE Mini Project!",
-            f"Hello {data.get('name')},<br><br>Your account has been officially approved! Welcome to the DSCE Mini Project portal.<br><br>You can now log in and access your dashboard to manage your project groups and view important updates.<br><br>Best Regards,<br>Admin Team"
-        )
-    except Exception as e:
-        print("Email error:", e)
+    # Approval email
+    create_notification(
+        [uid],
+        "✅ Your DSCE Account Approved!",
+        f"Hello {data.get('name')},<br><br>Your account has been officially approved! Welcome to the DSCE Mini Project portal.<br><br>You can now log in and access your dashboard to manage your project groups and view important updates."
+    )
 
     return {"message": "User approved"}
 
