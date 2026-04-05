@@ -99,7 +99,8 @@ export default function Login() {
                 password
             );
 
-            const token = await userCredential.user.getIdToken();
+            // Force-refresh to always get a valid token
+            const token = await userCredential.user.getIdToken(true);
             localStorage.setItem("token", token);
 
             await handleUserRouting(token);
@@ -137,7 +138,8 @@ export default function Login() {
                 return;
             }
 
-            const token = await user.getIdToken();
+            // Force-refresh to always get a valid token
+            const token = await user.getIdToken(true);
             localStorage.setItem("token", token);
 
             await handleUserRouting(token);

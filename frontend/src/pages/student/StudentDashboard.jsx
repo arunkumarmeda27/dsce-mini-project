@@ -4,6 +4,7 @@ import Sidebar from "../../components/Sidebar";
 import StatusTimeline from "../../components/StatusTimeline";
 import Preloader from "../../components/Preloader";
 import Toast from "../../components/Toast";
+import { getFreshToken } from "../../utils/getToken";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
@@ -15,7 +16,7 @@ export default function StudentDashboard() {
     const [newPassword, setNewPassword] = useState("");
     const [toast, setToast] = useState(null);
 
-    const getToken = () => localStorage.getItem("token");
+    const getToken = getFreshToken;
 
     useEffect(() => {
         fetchStudentData();
@@ -28,7 +29,7 @@ export default function StudentDashboard() {
 
         try {
 
-            const token = getToken();
+            const token = await getToken();
 
             const profileRes = await fetch(`${BASE_URL}/users/user-profile`, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -73,7 +74,7 @@ export default function StudentDashboard() {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${getToken()}`
+                    Authorization: `Bearer ${await getToken()}`
                 },
                 body: JSON.stringify({ newPassword })
             });
