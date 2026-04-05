@@ -93,11 +93,14 @@ function PublicRoute({ children }) {
     if (authLoading) return <AuthSplash />;
 
     if (user) {
-        const role = localStorage.getItem("role");
-        if (role === "admin") return <Navigate to="/admin" replace />;
-        if (role === "guide") return <Navigate to="/guide" replace />;
-        // Default to student, but /complete-profile if no role set yet
-        if (!role) return <Navigate to="/complete-profile" replace />;
+        // Redirection logic based on database role (Single Source of Truth)
+        if (user.role === "admin") return <Navigate to="/admin" replace />;
+        if (user.role === "guide") return <Navigate to="/guide" replace />;
+        
+        // If user exists but role is missing -> Complete Profile
+        if (!user.role) return <Navigate to="/complete-profile" replace />;
+        
+        // Default for students
         return <Navigate to="/student" replace />;
     }
 
@@ -118,7 +121,11 @@ function AppRoutes() {
                 </PublicRoute>
             } />
 
-            <Route path="/signup" element={<Signup />} />
+            <Route path="/signup" element={
+                <PublicRoute>
+                    <Signup />
+                </PublicRoute>
+            } />
 
             {/* ================= PROFILE ================= */}
             <Route path="/complete-profile" element={
