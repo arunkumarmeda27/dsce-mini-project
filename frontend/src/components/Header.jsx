@@ -159,7 +159,7 @@ export default function Header() {
                             {notifications.map(n => (
                                 <div key={n.id} style={{ padding: "10px", marginBottom: "8px", borderRadius: "8px", background: "#F5F9FF", borderLeft: "4px solid #1565C0" }}>
                                     <strong>{n.title || "Notification"}</strong>
-                                    <p style={{ margin: "4px 0", fontSize: "13px" }}>{n.message}</p>
+                                    <div style={{ margin: "4px 0", fontSize: "13px" }} dangerouslySetInnerHTML={{ __html: n.message }} />
                                 </div>
                             ))}
                         </div>
