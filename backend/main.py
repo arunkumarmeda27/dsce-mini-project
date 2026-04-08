@@ -12,6 +12,14 @@ from auth_routes import router as auth_router
 from user_routes import router as user_router
 from group_routes import router as group_router
 
+import time
+from collections import defaultdict
+
+# Simple In-Memory Rate Limiting
+request_counts = defaultdict(list)
+RATE_LIMIT = 120 # Requests allowed per IP
+RATE_WINDOW = 60 # In seconds
+
 # SYSTEM INIT
 from system_initializer import create_branch_admins
 
@@ -46,6 +54,29 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ===============================
+# RATE LIMITING (BRUTE FORCE PROTECTION)
+# ===============================
+class RateLimitMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        forwarded_for = request.headers.get("x-forwarded-for")
+        client_ip = forwarded_for.split(",")[0] if forwarded_for else (request.client.host if request.client else "127.0.0.1")
+        
+        current_time = time.time()
+        
+        # Keep only timestamps within the window
+        request_counts[client_ip] = [t for t in request_counts[client_ip] if current_time - t < RATE_WINDOW]
+        
+        if len(request_counts[client_ip]) >= RATE_LIMIT:
+            return JSONResponse(
+                status_code=429,
+                content={"detail": "Too many requests. Please try again later."}
+            )
+            
+        request_counts[client_ip].append(current_time)
+        return await call_next(request)
+
+app.add_middleware(RateLimitMiddleware)
 
 # ===============================
 # STATIC FILES (🔥 FIX 404 DOWNLOAD)

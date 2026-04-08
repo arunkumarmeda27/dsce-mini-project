@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { auth } from "./firebase/config";
 
 /* ================= AUTH PAGES ================= */
 import Login from "./pages/Login";
@@ -117,7 +118,9 @@ function ProtectedRoute({ children }) {
                         🔄 Check Status
                     </button>
                     <button 
-                        onClick={() => auth.signOut()}
+                        onClick={() => {
+                            import("firebase/auth").then(({ signOut }) => signOut(auth));
+                        }}
                         style={{
                             padding: "12px 24px",
                             background: "white",

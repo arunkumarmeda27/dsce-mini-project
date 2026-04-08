@@ -18,7 +18,8 @@ export function AuthProvider({ children }) {
                 const email = firebaseUser.email || "";
                 if (!email.endsWith("@dsce.edu.in")) {
                     console.warn("🚫 Non-college email detected. Signing out...");
-                    await auth.signOut();
+                    const { signOut } = await import("firebase/auth");
+                    await signOut(auth);
                     clearSession();
                     setUser(false);
                     setAuthLoading(false);
