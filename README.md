@@ -181,9 +181,8 @@ The infrastructure is already configured for easy deployment:
 
 **Arun Kumar Meda**
 - GitHub: [@arunkumarmeda27](https://github.com/arunkumarmeda27)
-- LinkedIn: [Your LinkedIn Profile URL](#) *(Update this with your actual LinkedIn!)*
-- Email: [Add your email here]
-
+- LinkedIn: https://www.linkedin.com/in/arun-kumar-meda-557b051b8/
+- Email: medaarun390@gmail.com
 **Project Link:** [https://github.com/arunkumarmeda27/dsce-mini-project](https://github.com/arunkumarmeda27/dsce-mini-project)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
