@@ -70,6 +70,16 @@ export default function Login() {
         localStorage.setItem("name", data.name);
         localStorage.setItem("uid", data.uid);
         localStorage.setItem("role", data.role);
+        
+        // 🔥 TRIGGER LOGIN SECURITY ALERT EMAIL (Non-blocking)
+        try {
+            fetch(`${BASE_URL}/auth/login-alert`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` }
+            }).catch(() => {});
+        } catch (e) {
+            console.error("Login email trigger failed:", e);
+        }
 
         if (data.role === "admin") navigate("/admin");
         else if (data.role === "guide") navigate("/guide");
