@@ -19,6 +19,24 @@ export default function Login() {
     const [loading, setLoading] = useState(false);
     const [googleLoading, setGoogleLoading] = useState(false);
     const [message, setMessage] = useState("");
+    const [failedAttempts, setFailedAttempts] = useState(0);
+    const [lockoutTimer, setLockoutTimer] = useState(0);
+
+    // =========================
+    // BRUTE FORCE LOCKOUT TIMER
+    // =========================
+    useEffect(() => {
+        let interval;
+        if (lockoutTimer > 0) {
+            interval = setInterval(() => {
+                setLockoutTimer((prev) => prev - 1);
+            }, 1000);
+        } else if (lockoutTimer === 0 && failedAttempts >= 5) {
+            setFailedAttempts(0);
+            setMessage("");
+        }
+        return () => clearInterval(interval);
+    }, [lockoutTimer, failedAttempts]);
 
     const BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
@@ -93,6 +111,10 @@ export default function Login() {
 
         setMessage("");
 
+        if (lockoutTimer > 0) {
+            return setMessage(`Too many attempts. Try again in ${lockoutTimer}s.`);
+        }
+
         if (!email || !password)
             return setMessage("Enter email and password");
 
@@ -109,6 +131,10 @@ export default function Login() {
                 password
             );
 
+            // Successfully logged in — reset counters
+            setFailedAttempts(0);
+            setLockoutTimer(0);
+
             // Force-refresh to always get a valid token
             const token = await userCredential.user.getIdToken(true);
             localStorage.setItem("token", token);
@@ -116,7 +142,15 @@ export default function Login() {
             await handleUserRouting(token);
 
         } catch {
-            setMessage("Login failed");
+            const newCount = failedAttempts + 1;
+            setFailedAttempts(newCount);
+            
+            if (newCount >= 5) {
+                setLockoutTimer(30);
+                setMessage(`Too many failed attempts. Try again in 30 seconds.`);
+            } else {
+                setMessage(`Login failed. Attempts left: ${5 - newCount}`);
+            }
         }
 
         setLoading(false);
@@ -243,8 +277,14 @@ export default function Login() {
 
                 <button
                     className="btn-primary"
-                    style={{ width: "100%", marginTop: "10px" }}
+                    style={{ 
+                        width: "100%", 
+                        marginTop: "10px",
+                        opacity: lockoutTimer > 0 ? 0.6 : 1,
+                        cursor: lockoutTimer > 0 ? "not-allowed" : "pointer"
+                    }}
                     onClick={login}
+                    disabled={loading || lockoutTimer > 0}
                 >
                     {loading ? "Loading..." : "Login"}
                 </button>
