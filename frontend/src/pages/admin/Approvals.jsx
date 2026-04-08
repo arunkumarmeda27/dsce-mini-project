@@ -41,72 +41,31 @@ export default function Approvals() {
     // Approve User
     // -----------------------------
     const approveUser = async (uid) => {
-
         try {
-
-            const res = await fetch(`${BASE_URL}/users/approve/${uid}`, {
-                method: "PUT",
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem("token")}`
-                }
-            });
-
-            const data = await res.json();
-
-            if (!res.ok) {
-                alert(data.detail || "Approval failed");
-                return;
-            }
-
+            await api.approveUser(uid);
             alert("User approved successfully");
-
             fetchUsers();
-
         } catch (error) {
-
-            alert("Server error during approval");
-
+            alert(error.message || "Server error during approval");
         }
-
     };
 
     // -----------------------------
     // Reject User
     // -----------------------------
     const rejectUser = async (uid) => {
-
         const confirmDelete = window.confirm(
             "Are you sure you want to reject this user?"
         );
-
         if (!confirmDelete) return;
 
         try {
-
-            const res = await fetch(`${BASE_URL}/users/reject/${uid}`, {
-                method: "DELETE",
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem("token")}`
-                }
-            });
-
-            const data = await res.json();
-
-            if (!res.ok) {
-                alert(data.detail || "Reject failed");
-                return;
-            }
-
+            await api.rejectUser(uid);
             alert("User rejected successfully");
-
             fetchUsers();
-
         } catch (error) {
-
-            alert("Server error during rejection");
-
+            alert(error.message || "Server error during rejection");
         }
-
     };
 
     // -----------------------------

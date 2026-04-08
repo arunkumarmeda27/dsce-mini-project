@@ -95,6 +95,18 @@ export const api = {
             method: "DELETE"
         }),
 
+    approveUser: (uid) =>
+        fetchWithAuth(`/users/approve/${uid}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({})
+        }),
+
+    rejectUser: (uid) =>
+        fetchWithAuth(`/users/delete-user/${uid}`, {
+            method: "DELETE"
+        }),
+
     resetPassword: (newPassword) =>
         fetchWithAuth("/users/reset-password", {
             method: "PUT",
