@@ -5,6 +5,8 @@ import StatusTimeline from "../../components/StatusTimeline";
 import Preloader from "../../components/Preloader";
 import Toast from "../../components/Toast";
 import { getFreshToken } from "../../utils/getToken";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "../../firebase/config";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
@@ -20,7 +22,38 @@ export default function StudentDashboard() {
 
     useEffect(() => {
         fetchStudentData();
+        const uid = localStorage.getItem("uid");
+        if (uid) {
+            checkNotifications(uid);
+        }
     }, []);
+
+    // =========================
+    // CHECK ALERTS
+    // =========================
+    const checkNotifications = async (uid) => {
+        try {
+            const q1 = query(collection(db, "notifications"), where("userId", "==", uid));
+            const q2 = query(collection(db, "notifications"), where("users", "array-contains", uid));
+            
+            const [s1, s2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+            const notifs = [...s1.docs, ...s2.docs].map(d => d.data());
+            
+            // Remove duplicates by ID if any logic overlaps
+            const uniqueNotifs = Array.from(new Set(notifs.map(n => JSON.stringify(n)))).map(n => JSON.parse(n));
+
+            if (uniqueNotifs.length > 0) {
+                const alertMessage = uniqueNotifs
+                    .map(n => `🔔 ${n.title}\n${n.message.replace(/<[^>]+>/g, '')}`)
+                    .join("\n\n------------------------\n\n");
+                
+                // Show standard browser alert as requested
+                setTimeout(() => alert(`You have new notifications:\n\n${alertMessage}`), 500);
+            }
+        } catch (err) {
+            console.error("Failed to fetch alerts:", err);
+        }
+    };
 
     // =========================
     // FETCH DATA

@@ -219,6 +219,14 @@ td {
         box-shadow: 4px 0 20px rgba(0,0,0,0.15);
     }
 
+    .skeleton-sidebar {
+        display: none !important;
+    }
+    
+    .skeleton-main {
+        margin-left: 0 !important;
+    }
+
     /* Dark overlay behind sidebar */
     body.sidebar-open::after {
         content: "";
@@ -233,4 +241,33 @@ td {
         margin-left: 0 !important;
         padding: 12px;
     }
+}
+
+/* ============================= */
+/* SKELETON LOADING EFFECTS      */
+/* ============================= */
+@keyframes shimmer {
+    0% {
+        background-position: -468px 0;
+    }
+    100% {
+        background-position: 468px 0;
+    }
+}
+
+.skeleton-pulse {
+    background: #f6f7f8;
+    background-image: linear-gradient(to right, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%, #f6f7f8 100%);
+    background-repeat: no-repeat;
+    background-size: 1000px 100%;
+    animation-duration: 1.5s;
+    animation-fill-mode: forwards;
+    animation-iteration-count: infinite;
+    animation-name: shimmer;
+    animation-timing-function: linear;
+}
+
+.skeleton-card {
+    box-shadow: 0 6px 18px rgba(0,0,0,0.03);
+    border: 1px solid #f0f0f0;
 }

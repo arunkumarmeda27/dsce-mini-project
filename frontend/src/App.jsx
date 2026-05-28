@@ -1,7 +1,8 @@
 import { useEffect, lazy, Suspense } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { auth } from "./firebase/config";
+import Preloader from "./components/Preloader";
 
 /* ================= AUTH PAGES ================= */
 const Login = lazy(() => import("./pages/Login"));
@@ -41,42 +42,12 @@ function BackendKeepAlive() {
 }
 
 // ==============================================
-// FULL-SCREEN SPLASH while Firebase resolves
-// ==============================================
-function AuthSplash() {
-    return (
-        <div style={{
-            height: "100vh",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "#f4f7ff",
-            gap: "16px"
-        }}>
-            <div style={{
-                width: "44px",
-                height: "44px",
-                border: "4px solid #e0e6fd",
-                borderTop: "4px solid #1565C0",
-                borderRadius: "50%",
-                animation: "spin 0.8s linear infinite"
-            }} />
-            <p style={{ color: "#1565C0", fontWeight: 600, fontSize: "15px", margin: 0 }}>
-                Loading DSCE Portal...
-            </p>
-            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-        </div>
-    );
-}
-
-// ==============================================
 // PROTECTED ROUTE — handles auth + approval
 // ==============================================
 function ProtectedRoute({ children }) {
     const { user, authLoading, refreshAuth } = useAuth();
 
-    if (authLoading) return <AuthSplash />;
+    if (authLoading) return <Preloader />;
 
     // Not logged in -> Login
     if (!user) return <Navigate to="/" replace />;
@@ -150,7 +121,7 @@ function ProtectedRoute({ children }) {
 function PublicRoute({ children }) {
     const { user, authLoading } = useAuth();
 
-    if (authLoading) return <AuthSplash />;
+    if (authLoading) return <Preloader />;
 
     if (user) {
         // Redirection logic based on database role (Single Source of Truth)
@@ -276,12 +247,12 @@ function AppRoutes() {
 export default function App() {
     return (
         <AuthProvider>
-            <BrowserRouter>
+            <HashRouter>
                 <BackendKeepAlive />
-                <Suspense fallback={<AuthSplash />}>
+                <Suspense fallback={<Preloader />}>
                     <AppRoutes />
                 </Suspense>
-            </BrowserRouter>
+            </HashRouter>
         </AuthProvider>
     );
 }

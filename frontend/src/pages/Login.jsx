@@ -99,9 +99,9 @@ export default function Login() {
             console.error("Login email trigger failed:", e);
         }
 
-        if (data.role === "admin") navigate("/admin");
-        else if (data.role === "guide") navigate("/guide");
-        else navigate("/student");
+        if (data.role === "admin") navigate("/admin", { replace: true });
+        else if (data.role === "guide") navigate("/guide", { replace: true });
+        else navigate("/student", { replace: true });
     };
 
     // =========================
