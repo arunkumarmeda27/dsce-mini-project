@@ -20,6 +20,9 @@ request_counts = defaultdict(list)
 RATE_LIMIT = 120 # Requests allowed per IP
 RATE_WINDOW = 60 # In seconds
 
+# Brute force login lockout tracking
+brute_force_tracker = defaultdict(lambda: {"attempts": [], "locked_until": 0.0})
+
 # SYSTEM INIT
 from system_initializer import create_branch_admins
 
@@ -64,6 +67,14 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         
         current_time = time.time()
         
+        # Check if currently locked out due to brute force
+        if current_time < brute_force_tracker[client_ip]["locked_until"]:
+            time_left = int(brute_force_tracker[client_ip]["locked_until"] - current_time)
+            return JSONResponse(
+                status_code=423,
+                content={"detail": f"Brute force protection active: IP locked out. Try again in {time_left} seconds."}
+            )
+        
         # Keep only timestamps within the window
         request_counts[client_ip] = [t for t in request_counts[client_ip] if current_time - t < RATE_WINDOW]
         
@@ -74,7 +85,31 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             )
             
         request_counts[client_ip].append(current_time)
-        return await call_next(request)
+        
+        # Process the request
+        response = await call_next(request)
+        
+        # Is it an auth/register path?
+        path = request.url.path
+        is_auth_path = path.startswith("/auth") or path.startswith("/users/register")
+        
+        # If the request failed on an auth path, increment the brute-force failure count
+        if is_auth_path and response.status_code in [400, 401, 403]:
+            tracker = brute_force_tracker[client_ip]
+            # Clean up failed attempts older than 5 minutes (300 seconds)
+            tracker["attempts"] = [t for t in tracker["attempts"] if current_time - t < 300]
+            tracker["attempts"].append(current_time)
+            
+            # Lockout if 5 failed attempts in 5 minutes
+            if len(tracker["attempts"]) >= 5:
+                tracker["locked_until"] = current_time + 60  # Lockout for 60 seconds
+                tracker["attempts"] = []  # Reset attempts count after locking
+                return JSONResponse(
+                    status_code=423,
+                    content={"detail": "Brute force detected: IP locked out for 60 seconds due to too many failed attempts."}
+                )
+                
+        return response
 
 app.add_middleware(RateLimitMiddleware)
 

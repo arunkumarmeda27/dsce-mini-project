@@ -96,6 +96,9 @@ def register(user: RegisterUser):
     else:
         raise HTTPException(status_code=400, detail="Invalid role")
 
+    if not user.email.endswith("@dsce.edu.in"):
+        raise HTTPException(status_code=400, detail="Only @dsce.edu.in emails are allowed")
+
     # 🔥 prevent duplicate
     existing = db.collection("users") \
         .where("email", "==", user.email) \
@@ -198,7 +201,8 @@ def get_user_profile(token_data=Depends(verify_token)):
         "usn": user.get("usn"),
         "branch": user.get("branch"),
         "role": user.get("role"),
-        "approved": user.get("approved")
+        "approved": user.get("approved"),
+        "researchArea": user.get("researchArea", "")
     }
 
 
@@ -320,7 +324,11 @@ def delete_user(uid: str, admin=Depends(verify_user)):
                 print("Failed to send removal email:", e)
 
     db.collection("users").document(uid).delete()
-    firebase_auth.delete_user(uid)
+    
+    try:
+        firebase_auth.delete_user(uid)
+    except Exception as e:
+        print("Firebase auth delete user warning:", e)
 
     return {"message": "User deleted"}
 
@@ -330,9 +338,24 @@ def delete_user(uid: str, admin=Depends(verify_user)):
 # ===============================
 @router.delete("/clear-notifications")
 def clear_notifications(user=Depends(verify_user)):
+    
+    # 1. Delete notifications where userId == uid
     docs = db.collection("notifications").where("userId", "==", user["uid"]).stream()
     for doc in docs:
         doc.reference.delete()
+        
+    # 2. Remove uid from users array notifications
+    docs2 = db.collection("notifications").where("users", "array_contains", user["uid"]).stream()
+    for doc in docs2:
+        data = doc.to_dict()
+        users_list = data.get("users", [])
+        if user["uid"] in users_list:
+            users_list.remove(user["uid"])
+            if len(users_list) == 0:
+                doc.reference.delete()
+            else:
+                doc.reference.update({"users": users_list})
+                
     return {"message": "Notifications cleared"}
 
 # ===============================
@@ -389,4 +412,20 @@ def test_email():
             "api_key_configured": True
         }
     except Exception as e:
-        return {"status": "ERROR", "error": str(e)}
+        return {"status": "ERROR", "error": str(e)}
+
+# ===============================
+# UPDATE RESEARCH AREA (GUIDE)
+# ===============================
+class UpdateResearchArea(BaseModel):
+    researchArea: str
+
+@router.put("/update-research-area")
+def update_research_area(data: UpdateResearchArea, user=Depends(verify_user)):
+    if user.get("role") != "guide":
+        raise HTTPException(status_code=403, detail="Guides only")
+        
+    db.collection("users").document(user["uid"]).update({
+        "researchArea": data.researchArea
+    })
+    return {"message": "Research area updated successfully"}

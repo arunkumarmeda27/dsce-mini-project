@@ -1,29 +1,29 @@
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { auth } from "./firebase/config";
 
 /* ================= AUTH PAGES ================= */
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
+const Login = lazy(() => import("./pages/Login"));
+const Signup = lazy(() => import("./pages/Signup"));
 
 /* ================= STUDENT PAGES ================= */
-import CompleteProfile from "./pages/CompleteProfile";
-import StudentDashboard from "./pages/student/StudentDashboard";
-import CreateGroup from "./pages/student/CreateGroup";
-import GroupStatus from "./pages/student/GroupStatus";
-import UploadProject from "./pages/student/UploadProject";
+const CompleteProfile = lazy(() => import("./pages/CompleteProfile"));
+const StudentDashboard = lazy(() => import("./pages/student/StudentDashboard"));
+const CreateGroup = lazy(() => import("./pages/student/CreateGroup"));
+const GroupStatus = lazy(() => import("./pages/student/GroupStatus"));
+const UploadProject = lazy(() => import("./pages/student/UploadProject"));
 
 /* ================= ADMIN PAGES ================= */
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import Approvals from "./pages/admin/Approvals";
-import ManageGroups from "./pages/admin/ManageGroups";
-import ManageStudents from "./pages/admin/ManageStudents";
-import ManageGuides from "./pages/admin/ManageGuides";
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const Approvals = lazy(() => import("./pages/admin/Approvals"));
+const ManageGroups = lazy(() => import("./pages/admin/ManageGroups"));
+const ManageStudents = lazy(() => import("./pages/admin/ManageStudents"));
+const ManageGuides = lazy(() => import("./pages/admin/ManageGuides"));
 
 /* ================= GUIDE PAGES ================= */
-import GuideDashboard from "./pages/guide/GuideDashboard";
-import ViewFiles from "./pages/guide/ViewFiles";
+const GuideDashboard = lazy(() => import("./pages/guide/GuideDashboard"));
+const ViewFiles = lazy(() => import("./pages/guide/ViewFiles"));
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
@@ -257,7 +257,7 @@ function AppRoutes() {
                 </ProtectedRoute>
             } />
 
-            <Route path="/guide/view-files" element={
+            <Route path="/guide/view-files/:groupId" element={
                 <ProtectedRoute>
                     <ViewFiles />
                 </ProtectedRoute>
@@ -278,7 +278,9 @@ export default function App() {
         <AuthProvider>
             <BrowserRouter>
                 <BackendKeepAlive />
-                <AppRoutes />
+                <Suspense fallback={<AuthSplash />}>
+                    <AppRoutes />
+                </Suspense>
             </BrowserRouter>
         </AuthProvider>
     );

@@ -8,6 +8,7 @@ export default function ManageGroups() {
     const [groups, setGroups] = useState([]);
     const [guides, setGuides] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [selectedGuides, setSelectedGuides] = useState({});
 
     useEffect(() => {
         fetchData();
@@ -169,21 +170,31 @@ export default function ManageGroups() {
                                 </p>
 
                                 {/* ASSIGN */}
-                                <select
-                                    className="input"
-                                    style={{ marginTop: "10px" }}
-                                    onChange={(e) =>
-                                        assignGuide(group.groupId, e.target.value)
-                                    }
-                                >
-                                    <option value="">Assign Guide</option>
+                                <div style={{ display: "flex", gap: "10px", marginTop: "10px", alignItems: "center" }}>
+                                    <select
+                                        className="select-theme"
+                                        style={{ margin: 0 }}
+                                        value={selectedGuides[group.groupId] || ""}
+                                        onChange={(e) =>
+                                            setSelectedGuides({ ...selectedGuides, [group.groupId]: e.target.value })
+                                        }
+                                    >
+                                        <option value="">Select Guide...</option>
 
-                                    {guides.map(g => (
-                                        <option key={g.uid} value={g.uid}>
-                                            {g.name}
-                                        </option>
-                                    ))}
-                                </select>
+                                        {guides.map(g => (
+                                            <option key={g.uid} value={g.uid}>
+                                                {g.name} ({g.researchArea || "No area specified"})
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <button 
+                                        className="btn-primary"
+                                        style={{ whiteSpace: "nowrap" }}
+                                        onClick={() => assignGuide(group.groupId, selectedGuides[group.groupId])}
+                                    >
+                                        Assign Guide
+                                    </button>
+                                </div>
 
                                 {/* ACTIONS */}
                                 <div style={{

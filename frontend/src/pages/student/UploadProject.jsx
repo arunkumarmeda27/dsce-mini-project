@@ -75,6 +75,9 @@ export default function UploadProject() {
 
             if (!valid)
                 return showToast("Presentation must be PPT/PDF", "error"), false;
+
+            if (ppt.size > MAX_FILE_SIZE)
+                return showToast("Presentation <10MB only", "error"), false;
         }
 
         for (let img of images) {

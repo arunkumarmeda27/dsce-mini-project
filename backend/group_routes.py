@@ -88,6 +88,41 @@ def create_group(data: CreateGroup, user=Depends(verify_user)):
         .stream()
     count = sum(1 for _ in existing_groups)
     group_id = f"{branch}{joining_year[-2:]}G{str(count+1).zfill(3)}"
+
+    # ==========================================
+    # 🔥 AUTOMATED GUIDE ALLOCATION
+    # ==========================================
+    assigned_guide_id = None
+    matching_guides = []
+    normalized_domain = data.domain.strip().lower()
+
+    if normalized_domain:
+        guides_stream = db.collection("users") \
+            .where("role", "==", "guide") \
+            .where("branch", "==", branch) \
+            .where("approved", "==", True) \
+            .stream()
+
+        for g in guides_stream:
+            g_data = g.to_dict()
+            g_area = g_data.get("researchArea", "")
+            if g_area:
+                # Support single string, comma-separated list, etc.
+                areas = [a.strip().lower() for a in g_area.split(",")]
+                if normalized_domain in areas or any(normalized_domain in a for a in areas) or any(a in normalized_domain for a in areas):
+                    matching_guides.append(g_data)
+
+    if matching_guides:
+        # Load balancing: count current groups assigned to each guide
+        guide_counts = {}
+        for mg in matching_guides:
+            mg_id = mg["uid"]
+            cnt_stream = db.collection("groups").where("guideId", "==", mg_id).stream()
+            guide_counts[mg_id] = sum(1 for _ in cnt_stream)
+        
+        # Pick the guide with the fewest assigned groups
+        assigned_guide_id = min(guide_counts, key=guide_counts.get)
+
     db.collection("groups").document(group_id).set({
         "groupId": group_id,
         "projectName": data.projectName,
@@ -96,8 +131,8 @@ def create_group(data: CreateGroup, user=Depends(verify_user)):
         "members": all_members,
         "branch": branch,
         "joiningYear": joining_year,
-        "guideId": None,
-        "status": "CREATED",
+        "guideId": assigned_guide_id,
+        "status": "GUIDE_ASSIGNED" if assigned_guide_id else "CREATED",
         "createdAt": firestore.SERVER_TIMESTAMP
     })
 
@@ -118,6 +153,17 @@ def create_group(data: CreateGroup, user=Depends(verify_user)):
 
     members_html = "<ul>" + "".join(member_details) + "</ul>"
 
+    guide_assigned_msg = ""
+    guide_data = {}
+    if assigned_guide_id:
+        guide_doc = db.collection("users").document(assigned_guide_id).get()
+        if guide_doc.exists:
+            guide_data = guide_doc.to_dict()
+            guide_name = guide_data.get("name", "Supervisor")
+            guide_assigned_msg = f"Guide <b>{guide_name}</b> has been automatically assigned to your group based on your project domain matching their research area (<b>{data.domain}</b>).<br><br>"
+    else:
+        guide_assigned_msg = "A guide will be assigned by the admin soon. You will receive a notification once assigned.<br><br>"
+
     for uid in all_members:
         user_doc = db.collection("users").document(uid).get()
         if user_doc.exists:
@@ -134,16 +180,44 @@ def create_group(data: CreateGroup, user=Depends(verify_user)):
                     <b>Domain:</b> {data.domain}<br>
                     <b>Leader:</b> {leader_name}<br><br>
                     <b>Group Members:</b>{members_html}
-                    A guide will be assigned by the admin soon. You will receive a notification once assigned.<br><br>
+                    {guide_assigned_msg}
                     Best Regards,<br>DSCE Mini Project Portal"""
                 )
 
     create_notification(
         all_members,
-        "👥 Group Created",
-        f"You have been added to group '{data.projectName}'",
+        "👥 Group Created" + (" & Guide Assigned" if assigned_guide_id else ""),
+        f"You have been added to group '{data.projectName}'" + (f". Guide {guide_data.get('name')} has been automatically assigned." if assigned_guide_id else ""),
         []
     )
+
+    # Notify guide if assigned
+    if assigned_guide_id:
+        guide_email = guide_data.get("email") or guide_data.get("googleEmail")
+        if guide_email:
+            try:
+                send_email(
+                    guide_email,
+                    "New Group Auto-Assignment",
+                    f"""Hello {guide_data.get('name', 'Guide')},<br><br>
+                    You have been automatically assigned to supervise a new mini project group based on your research area matching the project domain (<b>{data.domain}</b>).<br><br>
+                    <b>Group ID:</b> {group_id}<br>
+                    <b>Project Name:</b> {data.projectName}<br>
+                    <b>Domain:</b> {data.domain}<br>
+                    <b>Leader:</b> {leader_name}<br><br>
+                    Please log in to the portal to review this assignment.<br><br>
+                    Best Regards,<br>DSCE Mini Project Portal"""
+                )
+            except Exception as e:
+                print("Failed to send auto-assignment email to guide:", e)
+                
+        create_notification(
+            [assigned_guide_id],
+            "📌 New Group Assigned (Auto)",
+            f"You have been automatically assigned to supervise group {group_id} based on your research area matching their domain.",
+            []
+        )
+
     return {"message": "Group created", "groupId": group_id}
 
 # ===============================
@@ -494,6 +568,21 @@ def upload_project(
     if user["role"] != "student":
         raise HTTPException(status_code=403, detail="Students only")
 
+    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+
+    def check_size(f: UploadFile):
+        if f:
+            f.file.seek(0, 2)
+            size = f.file.tell()
+            f.file.seek(0)
+            if size > MAX_FILE_SIZE:
+                raise HTTPException(status_code=400, detail=f"File {f.filename} exceeds 10MB limit")
+
+    check_size(report)
+    check_size(ppt)
+    for img in images:
+        check_size(img)
+
     saved_files = {}
 
     # ===============================
@@ -603,7 +692,9 @@ def guide_groups(user=Depends(verify_user)):
                 members.append({
                     "uid": u.get("uid"),
                     "name": u.get("name"),
-                    "usn": u.get("usn")
+                    "usn": u.get("usn"),
+                    "email": u.get("email"),
+                    "phone": u.get("phone")
                 })
 
         result.append({

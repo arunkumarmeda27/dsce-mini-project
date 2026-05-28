@@ -144,6 +144,7 @@ export default function ManageGuides() {
                                     <th>Branch</th>
                                     <th>Email</th>
                                     <th>Phone</th>
+                                    <th>Research Area</th>
                                     <th>Actions</th>
 
                                 </tr>
@@ -167,6 +168,8 @@ export default function ManageGuides() {
                                                 ? guide.phone
                                                 : "Not Available"}
                                         </td>
+
+                                        <td>{guide.researchArea || "Not Specified"}</td>
 
                                         <td>
 

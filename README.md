@@ -91,6 +91,8 @@ This project modernizes the academic workflow through a highly scalable and deco
 | **👩‍🏫 Guide** | Reviews assigned groups, Accepts/Rejects proposals, tracks milestones, views student submissions, exports group data. |
 | **👑 Admin** | Approves new user registrations, manages guides, monitors total system overview, enforces group locking, bulk exports analytics (Excel/PDF). |
 
+*   **🔒 Security & Performance:** Integrated brute-force IP rate limiting middleware, payload size validations (<10MB limits), and React Lazy Loading for optimized bundle sizes.
+*   **🤖 Smart Allocation:** Automatic domain-to-research-area load balancing system for matching student groups to available faculty guides.
 *   **📧 Automated Email Service:** Custom Python SMTP handler sends HTML-rich automated updates on group creation, acceptances, rejections, and alerts.
 *   **📊 One-Click Data Export:** Natively compile cloud data into downloadable `.xlsx` and `.pdf` formats using OpenPyXL and ReportLab.
 *   **📂 Native Cloud File Uploads:** Direct integrations with Google Cloud Storage for handling large report repositories securely.

@@ -17,6 +17,7 @@ export default function GuideDashboard() {
     const [submissions, setSubmissions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [newPassword, setNewPassword] = useState("");
+    const [researchAreaInput, setResearchAreaInput] = useState("");
     const [toast, setToast] = useState(null);
 
     useEffect(() => {
@@ -29,6 +30,7 @@ export default function GuideDashboard() {
 
             const profile = await api.getUserProfile();
             setGuideInfo(profile);
+            setResearchAreaInput(profile.researchArea || "");
 
             const guideGroups = await api.getGuideGroups();
             setGroups(guideGroups || []);
@@ -41,6 +43,19 @@ export default function GuideDashboard() {
         }
 
         setLoading(false);
+    };
+
+    // ======================
+    // RESEARCH AREA
+    // ======================
+    const updateResearchArea = async () => {
+        try {
+            await api.updateResearchArea(researchAreaInput.trim());
+            setToast({ message: "Research area updated successfully", type: "success" });
+            loadDashboard();
+        } catch (err) {
+            setToast({ message: err.message || "Failed to update research area", type: "error" });
+        }
     };
 
     // ======================
@@ -133,6 +148,20 @@ export default function GuideDashboard() {
                     <p><b>{guideInfo?.name}</b></p>
                     <p>{guideInfo?.email}</p>
                     <p>{guideInfo?.branch}</p>
+                    <div style={{ marginTop: "8px", fontSize: "15px", display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                        <b>Research Area:</b>{" "}
+                        {guideInfo?.researchArea ? (
+                            guideInfo.researchArea.split(",").map((area, idx) => (
+                                <span key={idx} style={{ color: "#1565C0", fontWeight: "600", background: "#E3F2FD", padding: "4px 10px", borderRadius: "6px" }}>
+                                    {area.trim()}
+                                </span>
+                            ))
+                        ) : (
+                            <span style={{ color: "#777", background: "#f5f5f5", padding: "4px 10px", borderRadius: "6px" }}>
+                                Not specified yet
+                            </span>
+                        )}
+                    </div>
 
                     {/* EXPORT BUTTONS */}
                     <div style={{ marginTop: "10px" }}>
@@ -145,6 +174,35 @@ export default function GuideDashboard() {
                             style={{ marginLeft: "10px" }}
                             onClick={() => downloadFile("pdf")}>
                             Export PDF
+                        </button>
+                    </div>
+                </div>
+
+                {/* RESEARCH AREA */}
+                <div style={card}>
+                    <h3 style={{ color: "#1565C0", display: "flex", alignItems: "center", gap: "8px", margin: "0 0 10px 0" }}>
+                        🔬 Research Area
+                    </h3>
+                    <p style={{ color: "#666", fontSize: "14px", margin: "0 0 12px 0", lineHeight: "1.5" }}>
+                        Specify your research domains (e.g. IoT, AI/ML, Web Development, Cyber Security). 
+                        Student groups will be automatically allocated to you based on these topics.
+                    </p>
+
+                    <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                        <input
+                            type="text"
+                            className="input"
+                            style={{ margin: 0, flex: 1, maxWidth: "400px" }}
+                            placeholder="e.g. IoT, AI/ML, Blockchain"
+                            value={researchAreaInput}
+                            onChange={(e) => setResearchAreaInput(e.target.value)}
+                        />
+                        <button 
+                            className="btn-primary"
+                            style={{ padding: "10px 20px" }}
+                            onClick={updateResearchArea}
+                        >
+                            Save Area
                         </button>
                     </div>
                 </div>
@@ -202,7 +260,27 @@ export default function GuideDashboard() {
 
                                     <td>
                                         {g.members.map(m => (
-                                            <div key={m.uid}>{m.name}</div>
+                                            <div key={m.uid} style={{ marginBottom: "10px", paddingBottom: "10px", borderBottom: "1px solid #eee" }}>
+                                                <div style={{ fontWeight: "500", color: "#1565C0" }}>{m.name} ({m.usn || "N/A"})</div>
+                                                {g.status === "GUIDE_ACCEPTED" && (
+                                                    <div style={{ fontSize: "13px", color: "#666", marginTop: "4px" }}>
+                                                        <div>📧 {m.email || "No email"}</div>
+                                                        <div style={{ marginTop: "2px" }}>📞 {m.phone || "No phone"}</div>
+                                                        {m.phone && (
+                                                            <div style={{ marginTop: "4px" }}>
+                                                                <a 
+                                                                    href={`https://wa.me/${m.phone.replace(/[^0-9]/g, '')}`} 
+                                                                    target="_blank" 
+                                                                    rel="noreferrer"
+                                                                    style={{ color: "#25D366", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "4px", fontWeight: "600" }}
+                                                                >
+                                                                    💬 WhatsApp
+                                                                </a>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
                                         ))}
                                     </td>
 
@@ -227,34 +305,38 @@ export default function GuideDashboard() {
                                             </>
                                         )}
 
-                                        {/* VIEW FILES BUTTON */}
-                                        <button
-                                            style={{
-                                                marginLeft: "5px",
-                                                padding: "6px 10px",
-                                                borderRadius: "6px",
-                                                cursor: "pointer"
-                                            }}
-                                            onClick={() => navigate(`/view-files/${g.groupId}`)}
-                                        >
-                                            View Files
-                                        </button>
+                                        {g.status === "GUIDE_ACCEPTED" && (
+                                            <>
+                                                {/* VIEW FILES BUTTON */}
+                                                <button
+                                                    style={{
+                                                        marginLeft: "5px",
+                                                        padding: "6px 10px",
+                                                        borderRadius: "6px",
+                                                        cursor: "pointer"
+                                                    }}
+                                                    onClick={() => navigate(`/guide/view-files/${g.groupId}`)}
+                                                >
+                                                    View Files
+                                                </button>
 
-                                        {/* NOTIFY BUTTON */}
-                                        <button
-                                            style={{
-                                                marginLeft: "5px",
-                                                padding: "6px 10px",
-                                                borderRadius: "6px",
-                                                cursor: "pointer",
-                                                background: "#4CAF50",
-                                                color: "white",
-                                                border: "none"
-                                            }}
-                                            onClick={() => handleNotifyGuide(g.groupId)}
-                                        >
-                                            Notify
-                                        </button>
+                                                {/* NOTIFY BUTTON */}
+                                                <button
+                                                    style={{
+                                                        marginLeft: "5px",
+                                                        padding: "6px 10px",
+                                                        borderRadius: "6px",
+                                                        cursor: "pointer",
+                                                        background: "#4CAF50",
+                                                        color: "white",
+                                                        border: "none"
+                                                    }}
+                                                    onClick={() => handleNotifyGuide(g.groupId)}
+                                                >
+                                                    Notify
+                                                </button>
+                                            </>
+                                        )}
 
                                     </td>
 
@@ -279,7 +361,7 @@ export default function GuideDashboard() {
 
                             <div style={{ marginTop: "10px" }}>
                                 <button onClick={() =>
-                                    navigate(`/view-files/${sub.groupId}`)
+                                    navigate(`/guide/view-files/${sub.groupId}`)
                                 }>
                                     📂 Open Files
                                 </button>

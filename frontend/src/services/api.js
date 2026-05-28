@@ -114,6 +114,13 @@ export const api = {
             body: JSON.stringify({ newPassword })
         }),
 
+    updateResearchArea: (researchArea) =>
+        fetchWithAuth("/users/update-research-area", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ researchArea })
+        }),
+
     // =============================
     // GUIDE ACTIONS
     // =============================
