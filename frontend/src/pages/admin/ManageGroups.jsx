@@ -11,13 +11,13 @@ export default function ManageGroups() {
     const [loading, setLoading] = useState(false);
     const [selectedGuides, setSelectedGuides] = useState({});
 
-    if (loading) {
-        return <Preloader />;
-    }
-
     useEffect(() => {
         fetchData();
     }, []);
+
+    if (loading) {
+        return <Preloader />;
+    }
 
     const fetchData = async () => {
 

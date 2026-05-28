@@ -11,13 +11,13 @@ export default function Approvals() {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    if (loading) {
-        return <Preloader />;
-    }
-
     useEffect(() => {
         fetchUsers();
     }, []);
+
+    if (loading) {
+        return <Preloader />;
+    }
 
     // -----------------------------
     // Fetch Pending Users

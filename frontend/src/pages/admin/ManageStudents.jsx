@@ -9,13 +9,13 @@ export default function ManageStudents() {
     const [students, setStudents] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    if (loading) {
-        return <Preloader />;
-    }
-
     useEffect(() => {
         fetchStudents();
     }, []);
+
+    if (loading) {
+        return <Preloader />;
+    }
 
     const fetchStudents = async () => {
 

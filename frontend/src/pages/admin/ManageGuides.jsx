@@ -9,13 +9,13 @@ export default function ManageGuides() {
     const [guides, setGuides] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    if (loading) {
-        return <Preloader />;
-    }
-
     useEffect(() => {
         fetchGuides();
     }, []);
+
+    if (loading) {
+        return <Preloader />;
+    }
 
     // ==========================
     // FETCH GUIDES
