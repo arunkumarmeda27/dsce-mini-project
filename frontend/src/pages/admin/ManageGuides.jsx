@@ -2,11 +2,16 @@ import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
 import { useEffect, useState } from "react";
 import { api } from "../../services/api";
+import Preloader from "../../components/Preloader";
 
 export default function ManageGuides() {
 
     const [guides, setGuides] = useState([]);
     const [loading, setLoading] = useState(false);
+
+    if (loading) {
+        return <Preloader />;
+    }
 
     useEffect(() => {
         fetchGuides();
@@ -114,25 +119,16 @@ export default function ManageGuides() {
                     </h2>
 
 
-                    {/* LOADING */}
-
-                    {loading && (
-                        <p style={{ color: "#777" }}>
-                            Loading guides...
-                        </p>
-                    )}
-
-
                     {/* NO GUIDES */}
 
-                    {!loading && guides.length === 0 && (
+                    {guides.length === 0 && (
                         <p>No guides found</p>
                     )}
 
 
                     {/* GUIDE TABLE */}
 
-                    {!loading && guides.length > 0 && (
+                    {guides.length > 0 && (
 
                         <table>
 

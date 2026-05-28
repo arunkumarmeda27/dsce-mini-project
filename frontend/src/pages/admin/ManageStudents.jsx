@@ -2,11 +2,16 @@ import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
 import { useEffect, useState } from "react";
 import { api } from "../../services/api";
+import Preloader from "../../components/Preloader";
 
 export default function ManageStudents() {
 
     const [students, setStudents] = useState([]);
     const [loading, setLoading] = useState(false);
+
+    if (loading) {
+        return <Preloader />;
+    }
 
     useEffect(() => {
         fetchStudents();
@@ -114,25 +119,16 @@ export default function ManageStudents() {
                     </h2>
 
 
-                    {/* LOADING */}
-
-                    {loading && (
-                        <p style={{ color: "#777" }}>
-                            Loading students...
-                        </p>
-                    )}
-
-
                     {/* NO STUDENTS */}
 
-                    {!loading && students.length === 0 && (
+                    {students.length === 0 && (
                         <p>No students found</p>
                     )}
 
 
                     {/* STUDENT TABLE */}
 
-                    {!loading && students.length > 0 && (
+                    {students.length > 0 && (
 
                         <table>
 

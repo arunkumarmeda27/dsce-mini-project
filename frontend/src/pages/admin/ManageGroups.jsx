@@ -2,6 +2,7 @@ import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
 import { useEffect, useState } from "react";
 import { api } from "../../services/api";
+import Preloader from "../../components/Preloader";
 
 export default function ManageGroups() {
 
@@ -9,6 +10,10 @@ export default function ManageGroups() {
     const [guides, setGuides] = useState([]);
     const [loading, setLoading] = useState(false);
     const [selectedGuides, setSelectedGuides] = useState({});
+
+    if (loading) {
+        return <Preloader />;
+    }
 
     useEffect(() => {
         fetchData();
@@ -90,9 +95,7 @@ export default function ManageGroups() {
                         Manage Project Groups
                     </h2>
 
-                    {loading && <p>Loading...</p>}
-
-                    {!loading && groups.length === 0 && (
+                    {groups.length === 0 && (
                         <p>No groups available</p>
                     )}
 

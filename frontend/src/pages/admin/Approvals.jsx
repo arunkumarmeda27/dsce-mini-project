@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
 import { api } from "../../services/api";
+import Preloader from "../../components/Preloader";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
@@ -9,6 +10,10 @@ export default function Approvals() {
 
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
+
+    if (loading) {
+        return <Preloader />;
+    }
 
     useEffect(() => {
         fetchUsers();
@@ -85,13 +90,11 @@ export default function Approvals() {
                         Pending User Approvals
                     </h2>
 
-                    {loading && <p>Loading users...</p>}
-
-                    {!loading && users.length === 0 && (
+                    {users.length === 0 && (
                         <p>No pending approvals</p>
                     )}
 
-                    {!loading && users.map((user) => (
+                    {users.map((user) => (
 
                         <div
                             key={user.uid}
