@@ -2,7 +2,7 @@ import { initializeApp } from "firebase/app";
 import {
     getAuth,
     setPersistence,
-    browserLocalPersistence
+    browserSessionPersistence
 } from "firebase/auth";
 import { initializeFirestore } from "firebase/firestore";
 
@@ -24,14 +24,14 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 // =================================
-// AUTH (🔥 FIX ADDED HERE)
+// AUTH
 // =================================
 export const auth = getAuth(app);
 
-// 🔥 FORCE SESSION PERSISTENCE
-setPersistence(auth, browserLocalPersistence)
+// 🔥 FORCE SESSION PERSISTENCE (Clears session when tab or window is closed)
+setPersistence(auth, browserSessionPersistence)
     .then(() => {
-        console.log("✅ Auth persistence enabled");
+        console.log("✅ Auth session-only persistence enabled");
     })
     .catch((err) => {
         console.error("Persistence error:", err);

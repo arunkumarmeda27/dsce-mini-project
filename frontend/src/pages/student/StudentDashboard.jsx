@@ -17,6 +17,7 @@ export default function StudentDashboard() {
     const [loading, setLoading] = useState(true);
     const [newPassword, setNewPassword] = useState("");
     const [toast, setToast] = useState(null);
+    const [activeAlerts, setActiveAlerts] = useState([]);
 
     const getToken = getFreshToken;
 
@@ -43,12 +44,8 @@ export default function StudentDashboard() {
             const uniqueNotifs = Array.from(new Set(notifs.map(n => JSON.stringify(n)))).map(n => JSON.parse(n));
 
             if (uniqueNotifs.length > 0) {
-                const alertMessage = uniqueNotifs
-                    .map(n => `🔔 ${n.title}\n${n.message.replace(/<[^>]+>/g, '')}`)
-                    .join("\n\n------------------------\n\n");
-                
-                // Show standard browser alert as requested
-                setTimeout(() => alert(`You have new notifications:\n\n${alertMessage}`), 500);
+                // Set the notifications to display in the gorgeous themed modal
+                setActiveAlerts(uniqueNotifs);
             }
         } catch (err) {
             console.error("Failed to fetch alerts:", err);
@@ -291,6 +288,14 @@ export default function StudentDashboard() {
                 />
             )}
 
+            {/* BEAUTIFUL CUSTOM THEMED NOTIFICATION ALERT MODAL */}
+            {activeAlerts.length > 0 && (
+                <NotificationModal
+                    notifications={activeAlerts}
+                    onClose={() => setActiveAlerts([])}
+                />
+            )}
+
         </div>
     );
 }
@@ -334,6 +339,183 @@ function Info({ label, value }) {
         }}>
             <div style={{ fontSize: "12px", color: "#777" }}>{label}</div>
             <div style={{ fontWeight: "600" }}>{value}</div>
+        </div>
+    );
+}
+
+
+// ===============================
+// NOTIFICATION MODAL COMPONENT
+// ===============================
+function NotificationModal({ notifications, onClose }) {
+    useEffect(() => {
+        const handleEsc = (e) => {
+            if (e.key === "Escape") onClose();
+        };
+        window.addEventListener("keydown", handleEsc);
+        return () => window.removeEventListener("keydown", handleEsc);
+    }, [onClose]);
+
+    return (
+        <div style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            background: "rgba(11, 61, 145, 0.45)", // brand overlay
+            backdropFilter: "blur(6px)",
+            WebkitBackdropFilter: "blur(6px)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 10000,
+            animation: "alertFadeIn 0.25s ease-out forwards"
+        }}>
+            <div style={{
+                background: "#ffffff",
+                borderRadius: "16px",
+                width: "480px",
+                maxWidth: "90%",
+                maxHeight: "80vh",
+                display: "flex",
+                flexDirection: "column",
+                boxShadow: "0 24px 60px rgba(11, 61, 145, 0.3)",
+                border: "1px solid rgba(11, 61, 145, 0.1)",
+                overflow: "hidden",
+                animation: "alertSlideUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards"
+            }}>
+                {/* Header */}
+                <div style={{
+                    background: "linear-gradient(135deg, #0B3D91 0%, #1565C0 100%)",
+                    padding: "20px 24px",
+                    color: "white",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "14px",
+                    position: "relative"
+                }}>
+                    <div style={{
+                        background: "rgba(255, 255, 255, 0.2)",
+                        borderRadius: "50%",
+                        width: "42px",
+                        height: "42px",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        fontSize: "22px",
+                        animation: "pulseBell 2s infinite"
+                    }}>
+                        🔔
+                    </div>
+                    <div>
+                        <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "600", letterSpacing: "0.5px", color: "white" }}>
+                            New Notifications
+                        </h3>
+                        <div style={{ fontSize: "12px", opacity: 0.9, marginTop: "2px" }}>
+                            You have {notifications.length} new {notifications.length === 1 ? 'notification' : 'notifications'}
+                        </div>
+                    </div>
+                    <button 
+                        onClick={onClose}
+                        style={{
+                            position: "absolute",
+                            right: "20px",
+                            top: "20px",
+                            background: "transparent",
+                            border: "none",
+                            color: "white",
+                            fontSize: "20px",
+                            cursor: "pointer",
+                            opacity: 0.8,
+                            transition: "all 0.2s ease",
+                            lineHeight: 1
+                        }}
+                        onMouseEnter={(e) => e.target.style.opacity = 1}
+                        onMouseLeave={(e) => e.target.style.opacity = 0.8}
+                    >
+                        ✕
+                    </button>
+                </div>
+
+                {/* Body */}
+                <div style={{
+                    padding: "20px 24px",
+                    overflowY: "auto",
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "16px",
+                    background: "#F8FAFC"
+                }}>
+                    {notifications.map((n, index) => (
+                        <div 
+                            key={index} 
+                            style={{
+                                background: "#ffffff",
+                                padding: "16px",
+                                borderRadius: "12px",
+                                borderLeft: "5px solid #1565C0",
+                                boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
+                                transition: "all 0.2s ease",
+                                cursor: "default"
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = "translateY(-2px)";
+                                e.currentTarget.style.boxShadow = "0 6px 16px rgba(0,0,0,0.06)";
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = "translateY(0)";
+                                e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.03)";
+                            }}
+                        >
+                            <h4 style={{
+                                color: "#0B3D91",
+                                margin: "0 0 8px 0",
+                                fontSize: "15px",
+                                fontWeight: "600"
+                            }}>
+                                {n.title || "Notification"}
+                            </h4>
+                            <div 
+                                style={{
+                                    color: "#4A5568",
+                                    fontSize: "13.5px",
+                                    lineHeight: "1.6"
+                                }}
+                                dangerouslySetInnerHTML={{ __html: n.message }}
+                            />
+                        </div>
+                    ))}
+                </div>
+
+                {/* Footer */}
+                <div style={{
+                    padding: "16px 24px",
+                    borderTop: "1px solid #E2E8F0",
+                    background: "#ffffff",
+                    display: "flex",
+                    justifyContent: "flex-end"
+                }}>
+                    <button
+                        className="btn-primary"
+                        onClick={onClose}
+                        style={{
+                            padding: "10px 24px",
+                            fontWeight: "600",
+                            borderRadius: "8px",
+                            fontSize: "14px",
+                            boxShadow: "0 4px 12px rgba(11, 61, 145, 0.2)",
+                            cursor: "pointer",
+                            transition: "all 0.2s ease"
+                        }}
+                        onMouseEnter={(e) => e.target.style.transform = "scale(1.02)"}
+                        onMouseLeave={(e) => e.target.style.transform = "scale(1)"}
+                    >
+                        Got It, Thanks!
+                    </button>
+                </div>
+            </div>
         </div>
     );
 }
