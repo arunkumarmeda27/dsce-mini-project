@@ -1,4 +1,16 @@
+import { useLocation } from "react-router-dom";
+
 export default function Preloader() {
+
+    const location = useLocation();
+    const path = location.pathname;
+
+    let layoutType = "dashboard";
+    if (path.includes("manage") || path.includes("approvals") || path.includes("status")) {
+        layoutType = "table";
+    } else if (path.includes("create") || path.includes("upload") || path.includes("profile") || path === "/") {
+        layoutType = "form";
+    }
 
     return (
         <div style={{ display: "flex", width: "100%", height: "100vh", overflow: "hidden" }}>
@@ -48,33 +60,69 @@ export default function Preloader() {
                 gap: "20px"
             }}>
                 
-                {/* Top Row Cards */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "20px" }}>
-                    <div className="skeleton-card" style={{ background: "white", height: "180px", borderRadius: "14px", padding: "20px" }}>
-                        <div className="skeleton-pulse" style={{ width: "40%", height: "24px", borderRadius: "4px", marginBottom: "20px" }}></div>
-                        <div className="skeleton-pulse" style={{ width: "80%", height: "14px", borderRadius: "4px", marginBottom: "10px" }}></div>
-                        <div className="skeleton-pulse" style={{ width: "90%", height: "14px", borderRadius: "4px", marginBottom: "10px" }}></div>
-                        <div className="skeleton-pulse" style={{ width: "70%", height: "14px", borderRadius: "4px" }}></div>
-                    </div>
-                    
-                    <div className="skeleton-card" style={{ background: "white", height: "180px", borderRadius: "14px", padding: "20px" }}>
-                        <div className="skeleton-pulse" style={{ width: "50%", height: "24px", borderRadius: "4px", marginBottom: "20px" }}></div>
-                        <div className="skeleton-pulse" style={{ width: "100%", height: "40px", borderRadius: "6px", marginBottom: "10px" }}></div>
-                        <div className="skeleton-pulse" style={{ width: "100%", height: "40px", borderRadius: "6px" }}></div>
-                    </div>
-                </div>
+                {/* CONDITIONAL RENDER BASED ON URL */}
 
-                {/* Big Bottom Card */}
-                <div className="skeleton-card" style={{ background: "white", flex: 1, minHeight: "300px", borderRadius: "14px", padding: "20px" }}>
-                    <div className="skeleton-pulse" style={{ width: "30%", height: "28px", borderRadius: "4px", marginBottom: "25px" }}></div>
-                    <div style={{ display: "flex", gap: "15px", marginBottom: "20px" }}>
-                        <div className="skeleton-pulse" style={{ width: "25%", height: "60px", borderRadius: "10px" }}></div>
-                        <div className="skeleton-pulse" style={{ width: "25%", height: "60px", borderRadius: "10px" }}></div>
-                        <div className="skeleton-pulse" style={{ width: "25%", height: "60px", borderRadius: "10px" }}></div>
-                        <div className="skeleton-pulse" style={{ width: "25%", height: "60px", borderRadius: "10px" }}></div>
+                {layoutType === "dashboard" && (
+                    <>
+                        {/* Top Row Cards */}
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "20px" }}>
+                            <div className="skeleton-card" style={{ background: "white", height: "180px", borderRadius: "14px", padding: "20px" }}>
+                                <div className="skeleton-pulse" style={{ width: "40%", height: "24px", borderRadius: "4px", marginBottom: "20px" }}></div>
+                                <div className="skeleton-pulse" style={{ width: "80%", height: "14px", borderRadius: "4px", marginBottom: "10px" }}></div>
+                                <div className="skeleton-pulse" style={{ width: "90%", height: "14px", borderRadius: "4px", marginBottom: "10px" }}></div>
+                                <div className="skeleton-pulse" style={{ width: "70%", height: "14px", borderRadius: "4px" }}></div>
+                            </div>
+                            
+                            <div className="skeleton-card" style={{ background: "white", height: "180px", borderRadius: "14px", padding: "20px" }}>
+                                <div className="skeleton-pulse" style={{ width: "50%", height: "24px", borderRadius: "4px", marginBottom: "20px" }}></div>
+                                <div className="skeleton-pulse" style={{ width: "100%", height: "40px", borderRadius: "6px", marginBottom: "10px" }}></div>
+                                <div className="skeleton-pulse" style={{ width: "100%", height: "40px", borderRadius: "6px" }}></div>
+                            </div>
+                        </div>
+
+                        {/* Big Bottom Card */}
+                        <div className="skeleton-card" style={{ background: "white", flex: 1, minHeight: "300px", borderRadius: "14px", padding: "20px" }}>
+                            <div className="skeleton-pulse" style={{ width: "30%", height: "28px", borderRadius: "4px", marginBottom: "25px" }}></div>
+                            <div style={{ display: "flex", gap: "15px", marginBottom: "20px" }}>
+                                <div className="skeleton-pulse" style={{ width: "25%", height: "60px", borderRadius: "10px" }}></div>
+                                <div className="skeleton-pulse" style={{ width: "25%", height: "60px", borderRadius: "10px" }}></div>
+                                <div className="skeleton-pulse" style={{ width: "25%", height: "60px", borderRadius: "10px" }}></div>
+                                <div className="skeleton-pulse" style={{ width: "25%", height: "60px", borderRadius: "10px" }}></div>
+                            </div>
+                            <div className="skeleton-pulse" style={{ width: "100%", height: "120px", borderRadius: "10px" }}></div>
+                        </div>
+                    </>
+                )}
+
+                {layoutType === "table" && (
+                    <div className="skeleton-card" style={{ background: "white", flex: 1, minHeight: "500px", borderRadius: "14px", padding: "30px" }}>
+                        <div className="skeleton-pulse" style={{ width: "200px", height: "30px", borderRadius: "6px", marginBottom: "30px" }}></div>
+                        <div className="skeleton-pulse" style={{ width: "100%", height: "40px", borderRadius: "6px", marginBottom: "15px" }}></div>
+                        <div className="skeleton-pulse" style={{ width: "100%", height: "60px", borderRadius: "6px", marginBottom: "10px" }}></div>
+                        <div className="skeleton-pulse" style={{ width: "100%", height: "60px", borderRadius: "6px", marginBottom: "10px" }}></div>
+                        <div className="skeleton-pulse" style={{ width: "100%", height: "60px", borderRadius: "6px", marginBottom: "10px" }}></div>
+                        <div className="skeleton-pulse" style={{ width: "100%", height: "60px", borderRadius: "6px", marginBottom: "10px" }}></div>
                     </div>
-                    <div className="skeleton-pulse" style={{ width: "100%", height: "120px", borderRadius: "10px" }}></div>
-                </div>
+                )}
+
+                {layoutType === "form" && (
+                    <div style={{ display: "flex", justifyContent: "center" }}>
+                        <div className="skeleton-card" style={{ background: "white", width: "100%", maxWidth: "500px", borderRadius: "14px", padding: "30px" }}>
+                            <div className="skeleton-pulse" style={{ width: "180px", height: "30px", borderRadius: "6px", marginBottom: "30px", margin: "0 auto" }}></div>
+                            
+                            <div className="skeleton-pulse" style={{ width: "30%", height: "14px", borderRadius: "4px", marginBottom: "8px" }}></div>
+                            <div className="skeleton-pulse" style={{ width: "100%", height: "45px", borderRadius: "8px", marginBottom: "20px" }}></div>
+
+                            <div className="skeleton-pulse" style={{ width: "20%", height: "14px", borderRadius: "4px", marginBottom: "8px" }}></div>
+                            <div className="skeleton-pulse" style={{ width: "100%", height: "45px", borderRadius: "8px", marginBottom: "20px" }}></div>
+
+                            <div className="skeleton-pulse" style={{ width: "40%", height: "14px", borderRadius: "4px", marginBottom: "8px" }}></div>
+                            <div className="skeleton-pulse" style={{ width: "100%", height: "45px", borderRadius: "8px", marginBottom: "30px" }}></div>
+
+                            <div className="skeleton-pulse" style={{ width: "100%", height: "50px", borderRadius: "8px" }}></div>
+                        </div>
+                    </div>
+                )}
 
             </div>
 

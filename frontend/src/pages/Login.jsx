@@ -225,6 +225,12 @@ export default function Login() {
         }
     };
 
+    const handleKeyDown = (e) => {
+        if (e.key === "Enter") {
+            login();
+        }
+    };
+
     return (
 
         <div style={{
@@ -265,6 +271,7 @@ export default function Login() {
                     placeholder="College Email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    onKeyDown={handleKeyDown}
                 />
 
                 <input
@@ -273,6 +280,7 @@ export default function Login() {
                     placeholder="Password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    onKeyDown={handleKeyDown}
                 />
 
                 <button
